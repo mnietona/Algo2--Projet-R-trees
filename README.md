@@ -1,2 +1,2 @@
 # Projet_algo_2
-ta mere
+ Est ce que c'est bon ?
