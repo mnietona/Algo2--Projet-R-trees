@@ -21,7 +21,12 @@ public class Node {
         return this.mbr;
     }
 
+    public void setMBR(Envelope newMbr) { this.mbr = newMbr; }
+
     public List<Node> getSubnodes() {
         return this.subnodes;
     }
+
+    public void setSubnodes(List<Node> newSubnodes) { this.subnodes = newSubnodes; }
+
 }

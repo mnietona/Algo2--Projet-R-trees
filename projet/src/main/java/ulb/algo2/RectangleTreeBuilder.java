@@ -6,12 +6,13 @@ import org.opengis.feature.simple.SimpleFeature;
 public class RectangleTreeBuilder {
 
     public static void buildTree(RectangleTree rectangleTree, SimpleFeatureCollection featureCollection) {
-        SimpleFeatureIterator iterator = featureCollection.features();
-        while (iterator.hasNext()) {
-            SimpleFeature feature = iterator.next();
-            String label = feature.getID();
-            rectangleTree.insert(label, feature);
+        try (SimpleFeatureIterator iterator = featureCollection.features()) {
+            while (iterator.hasNext()) {
+                SimpleFeature feature = iterator.next();
+                //String label =  feature.getProperty("T_SEC_FR").getValue().toString();
+                String label = feature.getProperty("NAME_FR").getValue().toString();
+                rectangleTree.insert(label, feature);
+            }
         }
-        iterator.close();
     }
 }
