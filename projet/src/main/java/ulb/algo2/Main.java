@@ -13,12 +13,15 @@ import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
 import org.geotools.styling.SLD;
 import org.geotools.styling.Style;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.geotools.swing.JMapFrame;
@@ -26,11 +29,17 @@ import org.geotools.swing.JMapFrame;
 import static java.lang.System.exit;
 
 
+import java.util.List;
+import org.geotools.data.simple.SimpleFeatureIterator;
+import org.opengis.feature.simple.SimpleFeature;
+import java.util.concurrent.TimeUnit;
+
+
 public class Main {
     public static void main(String[] args) throws Exception {
-        //String filename="../projet/data/sh_statbel_statistical_sectors_31370_20220101.shp/sh_statbel_statistical_sectors_31370_20220101.shp";
+        String filename="../projet/data/sh_statbel_statistical_sectors_31370_20220101.shp/sh_statbel_statistical_sectors_31370_20220101.shp";
 
-        String filename = "../projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
+        //String filename = "../projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
 
         //String filename="../projet/data/communes-20220101-shp/communes-20220101.shp";
 
@@ -53,16 +62,19 @@ public class Main {
         // Get global bounds
         ReferencedEnvelope global_bounds = featureSource.getBounds();
 
+        //evaluateRtreeVariants(linearTree,quadraticTree,allFeatures,global_bounds);
+        //exit(0);
+
         GeometryBuilder gb = new GeometryBuilder();
 
         // Search for a random point
         Random r = new Random();
-        Point p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
-                r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
+        //Point p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
+          //      r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
 
-        System.out.println("Point: " + p.getX() + ", " + p.getY());
+        //System.out.println("Point: " + p.getX() + ", " + p.getY());
 
-        //Point p = gb.point(152183, 167679);// Plaine
+        Point p = gb.point(152183, 167679);// Plaine
         //Point p = gb.point(10.6, 59.9);// Oslo
         //Point p = gb.point(-70.9,-33.4);// Santiago
         //Point p = gb.point(169.2, -52.5);//NZ
@@ -113,6 +125,85 @@ public class Main {
         // Now display the map
         JMapFrame.showMap(map);
 
-
     }
+
+    public static void evaluateRtreeVariants(LinearRectangleTree linearTree, QuadraticRectangleTree quadraticTree, SimpleFeatureCollection allFeatures, ReferencedEnvelope global_bounds) {
+        int nQueries = 1000;
+        Random random = new Random();
+
+        long startTime, elapsedTime;
+        int foundResults;
+
+        GeometryBuilder gb = new GeometryBuilder();
+
+        // Générer une liste de points à tester
+        List<Point> testPoints = new ArrayList<>();
+        for (int i = 0; i < nQueries; i++) {
+            Point p = gb.point(random.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
+                    random.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
+            testPoints.add(p);
+        }
+
+        // Evaluation pour Linear R-Tree
+        startTime = System.nanoTime();
+        foundResults = 0;
+        System.out.println("Linear R-Tree:");
+        for (Point p : testPoints) {
+            Leaf result = linearTree.search(p);
+            System.out.println(result);
+            if (result != null) {
+                foundResults++;
+            }
+        }
+        elapsedTime = System.nanoTime() - startTime;
+        System.out.println("Linear R-Tree:");
+        System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
+        System.out.println("Results found: " + foundResults);
+
+        // Evaluation pour Quadratic R-Tree
+        startTime = System.nanoTime();
+        foundResults = 0;
+        System.out.println("Quadratic R-Tree:");
+        for (Point p : testPoints) {
+            Leaf result = quadraticTree.search(p);
+            if (result != null) {
+                foundResults++;
+            }
+        }
+        elapsedTime = System.nanoTime() - startTime;
+        System.out.println("Quadratic R-Tree:");
+        System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
+        System.out.println("Results found: " + foundResults);
+    }
+
+
+
+    public static void preprocessFeatures(SimpleFeatureCollection allFeatures) {
+        try (SimpleFeatureIterator iterator = allFeatures.features()) {
+            while (iterator.hasNext()) {
+                SimpleFeature feature = iterator.next();
+                Geometry geometry = (Geometry) feature.getDefaultGeometry();
+
+                // Traiter les multi-polygones étendus (par exemple, la France)
+                if (geometry instanceof MultiPolygon) {
+                    // Insérer le code pour traiter les multi-polygones
+
+                }
+
+                // Traiter les territoires près des pôles
+                if (isNearPoles(geometry)) {
+                    // Insérer le code pour traiter les territoires près des pôles
+                }
+            }
+        }
+    }
+
+    public static boolean isNearPoles(Geometry geometry) {
+        // Insérer le code pour déterminer si la géométrie est près des pôles
+        return false;
+    }
+
+
+
+
 }
