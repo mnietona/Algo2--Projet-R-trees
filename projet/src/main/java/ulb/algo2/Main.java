@@ -70,7 +70,7 @@ public class Main {
 
         //System.out.println(linearTreeResult.getLabel()); // POur point PLaine = CAMPUS UNIVERSITAIRE
 
-
+        // Test
 
         if (linearTreeResult != null){
             System.out.println("T'es bon gars");
