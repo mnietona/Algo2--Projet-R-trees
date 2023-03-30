@@ -23,4 +23,5 @@ public class Leaf extends Node {
     public SimpleFeature getPolygon() {
         return this.polygon;
     }
+
 }
