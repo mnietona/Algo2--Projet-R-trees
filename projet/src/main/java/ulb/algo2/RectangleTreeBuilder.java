@@ -9,8 +9,8 @@ public class RectangleTreeBuilder {
         try (SimpleFeatureIterator iterator = featureCollection.features()) {
             while (iterator.hasNext()) {
                 SimpleFeature feature = iterator.next();
-                String label =  feature.getProperty("T_SEC_FR").getValue().toString();
-                //String label = feature.getProperty("NAME_FR").getValue().toString();
+                //String label =  feature.getProperty("T_SEC_FR").getValue().toString();
+                String label = feature.getProperty("NAME_FR").getValue().toString();
                 rectangleTree.insert(label, feature);
             }
         }
