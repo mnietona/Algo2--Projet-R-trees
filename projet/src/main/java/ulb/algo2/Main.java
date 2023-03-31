@@ -2,6 +2,7 @@ package ulb.algo2;
 
 import java.io.File;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureCollection;
@@ -13,17 +14,26 @@ import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
 import org.geotools.styling.SLD;
 import org.geotools.styling.Style;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.geotools.swing.JMapFrame;
 
 import static java.lang.System.exit;
+
+
+import java.util.List;
+import org.geotools.data.simple.SimpleFeatureIterator;
+import org.opengis.feature.simple.SimpleFeature;
+import java.util.concurrent.TimeUnit;
 
 
 public class Main {
@@ -43,48 +53,105 @@ public class Main {
         store.dispose();
 
         // Build R-Trees
-        final int N = 10;
+        final int N = 100;
         LinearRectangleTree linearTree = new LinearRectangleTree(N);
         RectangleTreeBuilder.buildTree(linearTree, allFeatures);
-
         QuadraticRectangleTree quadraticTree = new QuadraticRectangleTree(N);
         RectangleTreeBuilder.buildTree(quadraticTree, allFeatures);
 
+
         // Get global bounds
         ReferencedEnvelope global_bounds = featureSource.getBounds();
-
         GeometryBuilder gb = new GeometryBuilder();
+        evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb);
 
-        // Search for a random point
-        Random r = new Random();
-        Point p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
-                r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
 
-        System.out.println("Point: " + p.getX() + ", " + p.getY());
+        Leaf linearTreeResult = null;
+        Leaf quadraticTreeResult = null;
+        Point p = null;
 
-        //Point p = gb.point(152183, 167679);// Plaine
-        //Point p = gb.point(10.6, 59.9);// Oslo
-        //Point p = gb.point(-70.9,-33.4);// Santiago
-        //Point p = gb.point(169.2, -52.5);//NZ
-        //Point p = gb.point(2, 45);
-
-        Leaf linearTreeResult = linearTree.search(p);
-        Leaf quadraticTreeResult = quadraticTree.search(p);
+        while(linearTreeResult == null || quadraticTreeResult == null) {
+            Pair<Point ,String> pair = getRandomPoint(gb, global_bounds, allFeatures);
+            if (linearTreeResult == null) {
+                linearTreeResult = linearTree.search(pair.getLeft());
+            }
+            if (quadraticTreeResult == null) {
+                quadraticTreeResult = quadraticTree.search(pair.getLeft());
+            }
+        }
 
         // Linear R-Tree
         System.out.println("Linear R-Tree:");
-        if (linearTreeResult != null) System.out.println(linearTreeResult.getLabel());
+        System.out.println(linearTreeResult.getLabel());
 
         // Quadratic R-Tree
         System.out.println("Quadratic R-Tree:");
-        if (quadraticTreeResult != null) System.out.println(quadraticTreeResult.getLabel());
+        System.out.println(quadraticTreeResult.getLabel());
 
 
-        if (linearTreeResult == null || quadraticTreeResult == null) {
-            System.out.println("No result found.");
-            exit(0);
+        if (linearTreeResult.getLabel().equals(quadraticTreeResult.getLabel())) {
+            System.out.println("The two trees returned the same result.");
+        }else{
+            System.out.println("The two trees returned different results.");
         }
 
+
+        // Show results on map
+        showMap(featureSource,linearTreeResult,quadraticTreeResult, gb, allFeatures, p);
+
+    }
+
+    public static void evaluateRtreeVariants(SimpleFeatureCollection allFeatures,LinearRectangleTree linearTree,
+                                             QuadraticRectangleTree quadraticTree, ReferencedEnvelope global_bounds, GeometryBuilder gb) {
+        int nQueries = 100;
+        long startTime, elapsedTime;
+        int foundResults;
+        String resultLabel;
+        List <Pair<Point,String>> linearOK = new ArrayList<>();
+        List <Pair<Point,String>> quadraticOK = new ArrayList<>();
+
+
+        // Générer une liste de points à tester
+        List<Pair<Point,String>> testPoints = new ArrayList<>();
+        for (int i = 0; i < nQueries; i++) {
+            Pair<Point ,String> result  = getRandomPoint(gb, global_bounds, allFeatures);
+            testPoints.add(result);
+        }
+
+        // Evaluation pour Linear R-Tree
+        startTime = System.nanoTime();
+        System.out.println("Linear R-Tree:");
+        for (Pair<Point, String> pair : testPoints) {
+            Leaf result = linearTree.search(pair.getLeft());
+            if (result != null) {
+                linearOK.add(pair);
+            }
+
+        }
+        elapsedTime = System.nanoTime() - startTime;
+        System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
+        System.out.println("Results found: " + linearOK.size());
+
+        // Evaluation pour Quadratic R-Tree
+        startTime = System.nanoTime();
+        System.out.println("Quadratic R-Tree:");
+        for (Pair<Point, String> pair : testPoints) {
+            Leaf result = quadraticTree.search(pair.getLeft());
+            if (result != null) {
+                quadraticOK.add(pair);
+            }
+
+        }
+        elapsedTime = System.nanoTime() - startTime;
+        System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
+        System.out.println("Results found: " + quadraticOK.size());
+
+        exit(0);
+    }
+
+
+    public static void showMap( SimpleFeatureSource featureSource, Leaf linearTreeResult, Leaf quadraticTreeResult,
+                                GeometryBuilder gb, SimpleFeatureCollection allFeatures, Point p) {
         // Display Map
         MapContent map = new MapContent();
         map.setTitle("Projet INFO-F203");
@@ -95,24 +162,77 @@ public class Main {
 
         ListFeatureCollection collection = new ListFeatureCollection(featureSource.getSchema());
         SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(featureSource.getSchema());
+        SimpleFeatureBuilder featureBuilder2 = new SimpleFeatureBuilder(featureSource.getSchema());
 
-        // Add Linear R-Tree result polygon
-        collection.add(linearTreeResult.getPolygon());
+        SimpleFeature linear = linearTreeResult.getPolygon();
+        SimpleFeature quadratic = quadraticTreeResult.getPolygon();
 
-        // Add Quadratic R-Tree result polygon
-        collection.add(quadraticTreeResult.getPolygon());
+        //Add linear R-Tree result MBR
+        featureBuilder.add(gb.box(linear.getBounds().getMinX(),
+                linear.getBounds().getMinY(),
+                linear.getBounds().getMaxX(),
+                linear.getBounds().getMaxY()
+        ));
+        collection.add(featureBuilder.buildFeature(null));
 
-        // Add search point
+        // Add quadratic R-Tree result MBR
+        featureBuilder2.add(gb.box(quadratic.getBounds().getMinX(),
+                quadratic.getBounds().getMinY(),
+                quadratic.getBounds().getMaxX(),
+                quadratic.getBounds().getMaxY()
+        ));
+        collection.add(featureBuilder2.buildFeature(null));
+
+        // Add search point (uncomment and customize if needed)
         Polygon c = gb.circle(p.getX(), p.getY(), allFeatures.getBounds().getWidth() / 200, 10);
         featureBuilder.add(c);
         collection.add(featureBuilder.buildFeature(null));
 
-        Style style2 = SLD.createLineStyle(Color.red, 2.0f);
+        // couleur pour quadrtic tree
+        Style style2 = SLD.createLineStyle(Color.blue, 4.0f);
+        // couleur pour linear tree
+        Style style3 = SLD.createLineStyle(Color.red, 2.0f);
+
         Layer layer2 = new FeatureLayer(collection, style2);
+        Layer layer3 = new FeatureLayer(collection, style3);
         map.addLayer(layer2);
+        map.addLayer(layer3);
+
         // Now display the map
         JMapFrame.showMap(map);
-
-
     }
+
+    public static Pair<Point,String> getRandomPoint(GeometryBuilder gb, ReferencedEnvelope global_bounds, SimpleFeatureCollection allFeatures) {
+        Random r = new Random();
+        Point p = null;
+        SimpleFeature target=null;
+        String label = "";
+
+        while (target == null) {
+
+            p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
+                    r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
+            try ( SimpleFeatureIterator iterator = allFeatures.features() ){
+                while( iterator.hasNext()){
+                    SimpleFeature feature = iterator.next();
+
+                    MultiPolygon polygon = (MultiPolygon) feature.getDefaultGeometry();
+
+                    if (polygon != null && polygon.contains(p)) {
+                        target = feature;
+                        break;
+                    }
+                }
+                if (target != null) {
+                    label = target.getProperty("NAME_FR").getValue().toString();
+
+                }
+
+            }
+        }
+        return  Pair.of(p, label);
+    }
+
+
+
 }

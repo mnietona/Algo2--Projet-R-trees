@@ -81,12 +81,15 @@ public class SinglePoint {
         //Point p = gb.point(152183, 167679);// Plaine
         //Point p = gb.point(4.4, 50.8);// 
         //Point p = gb.point(58.0, 47.0);
-        Point p = gb.point(10.6,59.9);// Oslo
+        //Point p = gb.point(10.6,59.9);// Oslo
+        //Point p = gb.point(-102, 36);
         
         //Point p = gb.point(-70.9,-33.4);// Santiago
         //Point p = gb.point(169.2, -52.5);//NZ
         
         //Point p = gb.point(172.97365198326708, 1.8869725782923172);
+        Point p = gb.point(87.28987534807803, -48.76633090688074);
+
         
         //Point p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
         //				r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
@@ -95,31 +98,34 @@ public class SinglePoint {
         
         System.out.println(all_features.size()+" features size");
 
-        try ( SimpleFeatureIterator iterator = all_features.features() ){
-            while( iterator.hasNext()){
-                 SimpleFeature feature = iterator.next();
-                 
-                 MultiPolygon polygon = (MultiPolygon) feature.getDefaultGeometry();
-                 System.out.println(feature.getFeatureType());
+        while (target == null) {
+        	p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
+            				r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
+            System.out.println("Point "+p.getX()+" "+p.getY());
+            try ( SimpleFeatureIterator iterator = all_features.features() ){
+                while( iterator.hasNext()){
+                    SimpleFeature feature = iterator.next();
 
-                 if (polygon != null && polygon.contains(p)) {
-                     System.out.println("Point in polygon "+feature.getID());
-                	 target = feature;
-                	 break;
-                 }
+                    MultiPolygon polygon = (MultiPolygon) feature.getDefaultGeometry();
+
+                    if (polygon != null && polygon.contains(p)) {
+                        System.out.println("Point in polygon "+feature.getID());
+                        target = feature;
+                        break;
+                    }
+                }
+                if (target == null)
+                    System.out.println("Point not in any polygon!");
             }
-         }
-        
-        if (target == null)
-        	System.out.println("Point not in any polygon!");
-        
-        else {
-        	for(Property prop: target.getProperties()) {
-        		if (prop.getName().toString() != "the_geom") {
-        		    System.out.println(prop.getName()+": "+prop.getValue());
-        		}
-        	}
         }
+
+
+        for(Property prop: target.getProperties()) {
+            if (prop.getName().toString() != "the_geom") {
+                System.out.println(prop.getName()+": "+prop.getValue());
+            }
+        }
+
          
         MapContent map = new MapContent();
         map.setTitle("Projet INFO-F203");
@@ -152,7 +158,7 @@ public class SinglePoint {
 	        
 	        collection.add(featureBuilder.buildFeature(null));
         }
-        
+
         Style style2 = SLD.createLineStyle(Color.red, 2.0f);
         Layer layer2 = new FeatureLayer(collection, style2);
         map.addLayer(layer2);
