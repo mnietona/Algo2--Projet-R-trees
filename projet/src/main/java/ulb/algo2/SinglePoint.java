@@ -54,9 +54,9 @@ public class SinglePoint {
         // display a data store file chooser dialog for shapefiles
         //String filename="../projet/data/sh_statbel_statistical_sectors_31370_20220101.shp/sh_statbel_statistical_sectors_31370_20220101.shp";
 
-        String filename="../projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
+        //tring filename="../projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
         
-        //String filename="../projet/data/communes-20220101-shp/communes-20220101.shp";
+        String filename="../projet/data/communes-20220101-shp/communes-20220101.shp";
         
         File file = new File(filename);
         if (!file.exists())
@@ -98,31 +98,30 @@ public class SinglePoint {
         
         System.out.println(all_features.size()+" features size");
 
-        while (target == null) {
-        	p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
-            				r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
-            System.out.println("Point "+p.getX()+" "+p.getY());
-            try ( SimpleFeatureIterator iterator = all_features.features() ){
-                while( iterator.hasNext()){
-                    SimpleFeature feature = iterator.next();
 
-                    MultiPolygon polygon = (MultiPolygon) feature.getDefaultGeometry();
+        try ( SimpleFeatureIterator iterator = all_features.features() ){
+            while( iterator.hasNext()){
+                SimpleFeature feature = iterator.next();
 
-                    if (polygon != null && polygon.contains(p)) {
-                        System.out.println("Point in polygon "+feature.getID());
-                        target = feature;
-                        break;
-                    }
+                MultiPolygon polygon = (MultiPolygon) feature.getDefaultGeometry();
+
+                if (polygon != null && polygon.contains(p)) {
+                    System.out.println("Point in polygon "+feature.getID());
+                    target = feature;
+                    System.out.println(target.getProperty("NAME_FR").getValue().toString());
+                    break;
                 }
-                if (target == null)
-                    System.out.println("Point not in any polygon!");
             }
+
         }
 
-
-        for(Property prop: target.getProperties()) {
-            if (prop.getName().toString() != "the_geom") {
-                System.out.println(prop.getName()+": "+prop.getValue());
+        if (target == null)
+            System.out.println("Point not in any polygon!");
+        else {
+            for (Property prop : target.getProperties()) {
+                if (prop.getName().toString() != "the_geom") {
+                    System.out.println(prop.getName() + ": " + prop.getValue());
+                }
             }
         }
 

@@ -14,7 +14,6 @@ import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
 import org.geotools.styling.SLD;
 import org.geotools.styling.Style;
-import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
@@ -33,16 +32,45 @@ import static java.lang.System.exit;
 import java.util.List;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.opengis.feature.simple.SimpleFeature;
+
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        //String filename="../projet/data/sh_statbel_statistical_sectors_31370_20220101.shp/sh_statbel_statistical_sectors_31370_20220101.shp";
 
-        String filename = "../projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
+        // input choice
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Choose a map:");
+        System.out.println("0: World");
+        System.out.println("1: Belgium");
+        System.out.println("2: France");
+        int choice = scanner.nextInt();
 
-        //String filename="../projet/data/communes-20220101-shp/communes-20220101.shp";
+        String filename = "";
+        String map = "";
+        switch (choice) {
+            case 0 -> {
+                filename = "../projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
+                map = "World";
+                System.out.println("the map : " + map);
+            }
+            case 1 -> {
+                filename = "../projet/data/sh_statbel_statistical_sectors_31370_20220101.shp/sh_statbel_statistical_sectors_31370_20220101.shp";
+                map = "Belgium";
+                System.out.println("the map : " + map);
+            }
+            case 2 -> {
+                filename = "../projet/data/communes-20220101-shp/communes-20220101.shp";
+                map = "France";
+                System.out.println("the map : " + map);
+            }
+            default -> {
+                System.out.println("Wrong choice");
+                exit(0);
+            }
+        }
 
         File file = new File(filename);
         if (!file.exists()) throw new RuntimeException("Shapefile does not exist.");
@@ -52,18 +80,20 @@ public class Main {
         SimpleFeatureCollection allFeatures = featureSource.getFeatures();
         store.dispose();
 
+
         // Build R-Trees
+
         final int N = 100;
         LinearRectangleTree linearTree = new LinearRectangleTree(N);
-        RectangleTreeBuilder.buildTree(linearTree, allFeatures);
+        RectangleTreeBuilder.buildTree(linearTree, allFeatures, map);
         QuadraticRectangleTree quadraticTree = new QuadraticRectangleTree(N);
-        RectangleTreeBuilder.buildTree(quadraticTree, allFeatures);
+        RectangleTreeBuilder.buildTree(quadraticTree, allFeatures, map);
 
 
         // Get global bounds
         ReferencedEnvelope global_bounds = featureSource.getBounds();
         GeometryBuilder gb = new GeometryBuilder();
-        evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb);
+        evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb,map);
 
 
         Leaf linearTreeResult = null;
@@ -71,7 +101,7 @@ public class Main {
         Point p = null;
 
         while(linearTreeResult == null || quadraticTreeResult == null) {
-            Pair<Point ,String> pair = getRandomPoint(gb, global_bounds, allFeatures);
+            Pair<Point ,String> pair = getRandomPoint(gb, global_bounds, allFeatures,map);
             if (linearTreeResult == null) {
                 linearTreeResult = linearTree.search(pair.getLeft());
             }
@@ -102,11 +132,9 @@ public class Main {
     }
 
     public static void evaluateRtreeVariants(SimpleFeatureCollection allFeatures,LinearRectangleTree linearTree,
-                                             QuadraticRectangleTree quadraticTree, ReferencedEnvelope global_bounds, GeometryBuilder gb) {
+                                             QuadraticRectangleTree quadraticTree, ReferencedEnvelope global_bounds, GeometryBuilder gb,String map) {
         int nQueries = 100;
         long startTime, elapsedTime;
-        int foundResults;
-        String resultLabel;
         List <Pair<Point,String>> linearOK = new ArrayList<>();
         List <Pair<Point,String>> quadraticOK = new ArrayList<>();
 
@@ -114,7 +142,7 @@ public class Main {
         // Générer une liste de points à tester
         List<Pair<Point,String>> testPoints = new ArrayList<>();
         for (int i = 0; i < nQueries; i++) {
-            Pair<Point ,String> result  = getRandomPoint(gb, global_bounds, allFeatures);
+            Pair<Point ,String> result  = getRandomPoint(gb, global_bounds, allFeatures, map);
             testPoints.add(result);
         }
 
@@ -202,7 +230,7 @@ public class Main {
         JMapFrame.showMap(map);
     }
 
-    public static Pair<Point,String> getRandomPoint(GeometryBuilder gb, ReferencedEnvelope global_bounds, SimpleFeatureCollection allFeatures) {
+    public static Pair<Point,String> getRandomPoint(GeometryBuilder gb, ReferencedEnvelope global_bounds, SimpleFeatureCollection allFeatures,String map) {
         Random r = new Random();
         Point p = null;
         SimpleFeature target=null;
@@ -224,8 +252,12 @@ public class Main {
                     }
                 }
                 if (target != null) {
-                    label = target.getProperty("NAME_FR").getValue().toString();
-
+                    switch (map) {
+                        case "Belgium" -> label = target.getProperty("T_SEC_FR").getValue().toString();
+                        case "World" -> label = target.getProperty("NAME_FR").getValue().toString();
+                        case "France" -> label = target.getProperty("nom").getValue().toString();
+                    }
+                    System.out.println(label);
                 }
 
             }
