@@ -83,11 +83,17 @@ public class Main {
 
         // Build R-Trees
 
-        final int N = 100;
+        final int N = 10;
         LinearRectangleTree linearTree = new LinearRectangleTree(N);
         RectangleTreeBuilder.buildTree(linearTree, allFeatures, map);
         QuadraticRectangleTree quadraticTree = new QuadraticRectangleTree(N);
         RectangleTreeBuilder.buildTree(quadraticTree, allFeatures, map);
+
+        System.out.println("Linear R-Tree taille :");
+        System.out.println(linearTree.getSize());
+        System.out.println("Quadratic R-Tree taille :");
+        System.out.println(quadraticTree.getSize());
+
 
 
         // Get global bounds
@@ -98,10 +104,10 @@ public class Main {
 
         Leaf linearTreeResult = null;
         Leaf quadraticTreeResult = null;
-        Point p = null;
+        Pair<Point ,String> pair = null;
 
         while(linearTreeResult == null || quadraticTreeResult == null) {
-            Pair<Point ,String> pair = getRandomPoint(gb, global_bounds, allFeatures,map);
+            pair = getRandomPoint(gb, global_bounds, allFeatures,map);
             if (linearTreeResult == null) {
                 linearTreeResult = linearTree.search(pair.getLeft());
             }
@@ -127,13 +133,13 @@ public class Main {
 
 
         // Show results on map
-        showMap(featureSource,linearTreeResult,quadraticTreeResult, gb, allFeatures, p);
+        showMap(featureSource,linearTreeResult,quadraticTreeResult, gb, allFeatures, pair.getLeft());
 
     }
 
     public static void evaluateRtreeVariants(SimpleFeatureCollection allFeatures,LinearRectangleTree linearTree,
                                              QuadraticRectangleTree quadraticTree, ReferencedEnvelope global_bounds, GeometryBuilder gb,String map) {
-        int nQueries = 100;
+        int nQueries = 1000;
         long startTime, elapsedTime;
         List <Pair<Point,String>> linearOK = new ArrayList<>();
         List <Pair<Point,String>> quadraticOK = new ArrayList<>();
@@ -158,7 +164,7 @@ public class Main {
         }
         elapsedTime = System.nanoTime() - startTime;
         System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
-        System.out.println("Results found: " + linearOK.size());
+        System.out.println("Results found: " + linearOK.size() + "sur " + nQueries);
 
         // Evaluation pour Quadratic R-Tree
         startTime = System.nanoTime();
@@ -172,7 +178,7 @@ public class Main {
         }
         elapsedTime = System.nanoTime() - startTime;
         System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
-        System.out.println("Results found: " + quadraticOK.size());
+        System.out.println("Results found: " + quadraticOK.size() + "sur " + nQueries);
 
         exit(0);
     }
@@ -257,7 +263,6 @@ public class Main {
                         case "World" -> label = target.getProperty("NAME_FR").getValue().toString();
                         case "France" -> label = target.getProperty("nom").getValue().toString();
                     }
-                    System.out.println(label);
                 }
 
             }

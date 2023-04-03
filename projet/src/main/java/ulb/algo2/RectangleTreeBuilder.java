@@ -1,6 +1,7 @@
 package ulb.algo2;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
+import org.locationtech.jts.geom.Polygon;
 import org.opengis.feature.simple.SimpleFeature;
 
 public class RectangleTreeBuilder {
@@ -26,5 +27,6 @@ public class RectangleTreeBuilder {
 
             }
         }
+
     }
 }

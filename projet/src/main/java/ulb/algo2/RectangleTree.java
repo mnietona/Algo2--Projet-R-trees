@@ -14,39 +14,54 @@ public abstract class RectangleTree {
 
     public RectangleTree(int N) {
         this.N = N;
+        this.root = new Node();
     }
 
     private Node getRoot() {
         return root;
     }
 
-    public void insert(String label, SimpleFeature polygon) {
-        if (root == null) {
-            root = new Leaf(label, polygon);
+    public void insert(String label, SimpleFeature feature) {
+        // Si l'arbre est vide, créez une nouvelle feuille et définissez-la comme racine
+        if (root.isEmpty()) {
+            Leaf newLeaf = new Leaf(label, feature);
+            root.addLeaf(newLeaf);
         } else {
-            Node newNode = addLeaf(root, label, polygon);
+            // Sinon, trouvez le nœud approprié pour insérer la nouvelle feuille
+            Node chosenNode = chooseNode(root, feature);
+
+            // Ajoutez la nouvelle feuille au nœud choisi et mettez à jour le MBR
+            Node newNode = addLeaf(chosenNode, label, feature);
+
+            // Si addLeaf renvoie un nouveau nœud (split nécessaire), mettez à jour l'arbre
             if (newNode != null) {
-                // La racine a été divisée, créer un nouveau nœud racine
-                Node newRoot = new Node();
-                newRoot.getSubnodes().add(root);
-                newRoot.getSubnodes().add(newNode);
-                root = newRoot;
+                // Si la racine doit être divisée, créez une nouvelle racine
+                if (root.shouldSplit(N)) {
+                    Node newRoot = new Node();
+                    newRoot.addSubNode(root);
+                    newRoot.addSubNode(newNode);
+                    root = newRoot;
+                } else {
+                    // Sinon, ajoutez simplement le nouveau nœud à la racine
+                    root.addSubNode(newNode);
+                }
             }
         }
     }
+
 
     protected Node chooseNode(Node node, SimpleFeature polygon) {
         Geometry geometry = (Geometry) polygon.getDefaultGeometry();
         Envelope polygonEnvelope = geometry.getEnvelopeInternal();
 
-        if (node.getSubnodes().isEmpty() || node.getSubnodes().get(0) instanceof Leaf) {
+        if (node.getSubNodes().isEmpty() || node.getSubNodes().get(0) instanceof Leaf) {
             return node;
         }
 
         double minExpansion = Double.MAX_VALUE;
         Node bestNode = null;
 
-        for (Node subnode : node.getSubnodes()) {
+        for (Node subnode : node.getSubNodes()) {
             Envelope expandedEnvelope = new Envelope(subnode.getMBR());
             expandedEnvelope.expandToInclude(polygonEnvelope);
             double expansion = expandedEnvelope.getArea() - subnode.getMBR().getArea();
@@ -70,18 +85,18 @@ public abstract class RectangleTree {
         Geometry geometry = (Geometry) polygon.getDefaultGeometry();
         Envelope polygonEnvelope = geometry.getEnvelopeInternal();
 
-        if (node.getSubnodes().isEmpty() || node.getSubnodes().get(0) instanceof Leaf) {
-            node.getSubnodes().add(new Leaf(label, polygon));
+        if (node.getSubNodes().isEmpty() || node.getSubNodes().get(0) instanceof Leaf) {
+            node.getSubNodes().add(new Leaf(label, polygon));
         } else {
             Node selectedNode = chooseNode(node, polygon);
             Node newNode = addLeaf(selectedNode, label, polygon);
             if (newNode != null) {
-                node.getSubnodes().add(newNode);
+                node.getSubNodes().add(newNode);
             }
         }
         node.expandEnvelope(polygonEnvelope);
 
-        if (node.getSubnodes().size() >= N) {
+        if (node.getSubNodes().size() >= N) {
             return split(node);
         } else {
             return null;
@@ -90,15 +105,15 @@ public abstract class RectangleTree {
 
     protected Node split(Node node) {
 
-        int size = node.getSubnodes().size();
-        int[] seeds = pickSeeds(node.getSubnodes());
+        int size = node.getSubNodes().size();
+        int[] seeds = pickSeeds(node.getSubNodes());
 
         Node group1 = new Node();
         Node group2 = new Node();
-        group1.getSubnodes().add(node.getSubnodes().get(seeds[0]));
-        group2.getSubnodes().add(node.getSubnodes().get(seeds[1]));
-        group1.expandEnvelope(node.getSubnodes().get(seeds[0]).getMBR());
-        group2.expandEnvelope(node.getSubnodes().get(seeds[1]).getMBR());
+        group1.getSubNodes().add(node.getSubNodes().get(seeds[0]));
+        group2.getSubNodes().add(node.getSubNodes().get(seeds[1]));
+        group1.expandEnvelope(node.getSubNodes().get(seeds[0]).getMBR());
+        group2.expandEnvelope(node.getSubNodes().get(seeds[1]).getMBR());
 
         boolean[] assigned = new boolean[size];
         assigned[seeds[0]] = true;
@@ -106,11 +121,11 @@ public abstract class RectangleTree {
         int remaining = size - 2;
 
         while (remaining > 0) {
-            int nextNodeIndex = pickNext(node.getSubnodes(), group1.getMBR(), group2.getMBR(), assigned);
+            int nextNodeIndex = pickNext(node.getSubNodes(), group1.getMBR(), group2.getMBR(), assigned);
             Envelope e1 = new Envelope(group1.getMBR());
             Envelope e2 = new Envelope(group2.getMBR());
-            e1.expandToInclude(node.getSubnodes().get(nextNodeIndex).getMBR());
-            e2.expandToInclude(node.getSubnodes().get(nextNodeIndex).getMBR());
+            e1.expandToInclude(node.getSubNodes().get(nextNodeIndex).getMBR());
+            e2.expandToInclude(node.getSubNodes().get(nextNodeIndex).getMBR());
 
             double area1 = group1.getMBR().getArea();
             double area2 = group2.getMBR().getArea();
@@ -118,18 +133,18 @@ public abstract class RectangleTree {
             double expandedArea2 = e2.getArea();
 
             if (expandedArea1 - area1 < expandedArea2 - area2) {
-                group1.getSubnodes().add(node.getSubnodes().get(nextNodeIndex));
-                group1.expandEnvelope(node.getSubnodes().get(nextNodeIndex).getMBR());
+                group1.getSubNodes().add(node.getSubNodes().get(nextNodeIndex));
+                group1.expandEnvelope(node.getSubNodes().get(nextNodeIndex).getMBR());
             } else {
-                group2.getSubnodes().add(node.getSubnodes().get(nextNodeIndex));
-                group2.expandEnvelope(node.getSubnodes().get(nextNodeIndex).getMBR());
+                group2.getSubNodes().add(node.getSubNodes().get(nextNodeIndex));
+                group2.expandEnvelope(node.getSubNodes().get(nextNodeIndex).getMBR());
             }
 
             assigned[nextNodeIndex] = true;
             remaining--;
         }
 
-        node.setSubnodes(group1.getSubnodes());
+        node.setSubNodes(group1.getSubNodes());
         node.setMBR(group1.getMBR());
         return group2;
     }
@@ -175,7 +190,7 @@ public abstract class RectangleTree {
                 return leaf;
             }
         } else {
-            for (Node subnode : node.getSubnodes()) {
+            for (Node subnode : node.getSubNodes()) {
                 if (subnode.getMBR().contains(point.getCoordinate())) {
                     Leaf result = searchHelper(subnode, point);
                     if (result != null) {
@@ -186,5 +201,27 @@ public abstract class RectangleTree {
         }
         return null;
     }
+
+    public int getSize() {
+        return sizeTree(root);
+    }
+
+    public int sizeTree(Node node) {
+        if (node == null) {
+            return 0;
+        }
+
+        if (node instanceof Leaf) {
+            return 1;
+        } else {
+            int count = 0;
+            for (Node subnode : node.getSubNodes()) {
+                count += sizeTree(subnode);
+            }
+            return count;
+        }
+    }
+
+
 
 }

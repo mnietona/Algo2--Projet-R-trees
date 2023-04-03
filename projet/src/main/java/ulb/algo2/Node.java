@@ -6,11 +6,27 @@ import java.util.List;
 
 public class Node {
     protected Envelope mbr;
-    protected List<Node> subnodes;
+    protected List<Node> subNodes;
 
     public Node() {
         this.mbr = new Envelope();
-        this.subnodes = new ArrayList<>();
+        this.subNodes = new ArrayList<>();
+    }
+    public void addSubNode(Node node) {
+        subNodes.add(node);
+        mbr.expandToInclude(node.getMBR());
+    }
+
+    public void addLeaf(Leaf leaf) {
+        addSubNode(leaf);
+    }
+
+    public boolean isEmpty() {
+        return subNodes.isEmpty();
+    }
+
+    public boolean shouldSplit(int maxSubNodes) {
+        return subNodes.size() >= maxSubNodes;
     }
 
     public void expandEnvelope(Envelope envelope) {
@@ -23,10 +39,10 @@ public class Node {
 
     public void setMBR(Envelope newMbr) { this.mbr = newMbr; }
 
-    public List<Node> getSubnodes() {
-        return this.subnodes;
+    public List<Node> getSubNodes() {
+        return this.subNodes;
     }
 
-    public void setSubnodes(List<Node> newSubnodes) { this.subnodes = newSubnodes; }
+    public void setSubNodes(List<Node> newSubnodes) { this.subNodes = newSubnodes; }
 
 }
