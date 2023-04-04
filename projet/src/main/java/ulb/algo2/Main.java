@@ -95,7 +95,6 @@ public class Main {
         System.out.println(quadraticTree.getSize());
 
 
-
         // Get global bounds
         ReferencedEnvelope global_bounds = featureSource.getBounds();
         GeometryBuilder gb = new GeometryBuilder();
@@ -139,11 +138,10 @@ public class Main {
 
     public static void evaluateRtreeVariants(SimpleFeatureCollection allFeatures,LinearRectangleTree linearTree,
                                              QuadraticRectangleTree quadraticTree, ReferencedEnvelope global_bounds, GeometryBuilder gb,String map) {
-        int nQueries = 1000;
+        int nQueries = 10;
         long startTime, elapsedTime;
         List <Pair<Point,String>> linearOK = new ArrayList<>();
         List <Pair<Point,String>> quadraticOK = new ArrayList<>();
-
 
         // Générer une liste de points à tester
         List<Pair<Point,String>> testPoints = new ArrayList<>();
@@ -154,7 +152,7 @@ public class Main {
 
         // Evaluation pour Linear R-Tree
         startTime = System.nanoTime();
-        System.out.println("Linear R-Tree:");
+        System.out.println("Search Linear R-Tree:");
         for (Pair<Point, String> pair : testPoints) {
             Leaf result = linearTree.search(pair.getLeft());
             if (result != null) {
@@ -164,11 +162,11 @@ public class Main {
         }
         elapsedTime = System.nanoTime() - startTime;
         System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
-        System.out.println("Results found: " + linearOK.size() + "sur " + nQueries);
+        System.out.println("Results found: " + linearOK.size() + " sur " + nQueries);
 
         // Evaluation pour Quadratic R-Tree
         startTime = System.nanoTime();
-        System.out.println("Quadratic R-Tree:");
+        System.out.println("Search Quadratic R-Tree:");
         for (Pair<Point, String> pair : testPoints) {
             Leaf result = quadraticTree.search(pair.getLeft());
             if (result != null) {
@@ -178,7 +176,7 @@ public class Main {
         }
         elapsedTime = System.nanoTime() - startTime;
         System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
-        System.out.println("Results found: " + quadraticOK.size() + "sur " + nQueries);
+        System.out.println("Results found: " + quadraticOK.size() + " sur " + nQueries);
 
         exit(0);
     }
