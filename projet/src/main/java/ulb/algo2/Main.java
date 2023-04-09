@@ -83,14 +83,14 @@ public class Main {
 
         // Build R-Trees
 
-        final int N = 10;
+        final int N = 10000;
         LinearRectangleTree linearTree = new LinearRectangleTree(N);
         RectangleTreeBuilder.buildTree(linearTree, allFeatures, map);
-        QuadraticRectangleTree quadraticTree = new QuadraticRectangleTree(N);
-        RectangleTreeBuilder.buildTree(quadraticTree, allFeatures, map);
-
         System.out.println("Linear R-Tree taille :");
         System.out.println(linearTree.getSize());
+
+        QuadraticRectangleTree quadraticTree = new QuadraticRectangleTree(N);
+        RectangleTreeBuilder.buildTree(quadraticTree, allFeatures, map);
         System.out.println("Quadratic R-Tree taille :");
         System.out.println(quadraticTree.getSize());
 
@@ -98,13 +98,18 @@ public class Main {
         // Get global bounds
         ReferencedEnvelope global_bounds = featureSource.getBounds();
         GeometryBuilder gb = new GeometryBuilder();
-        evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb,map);
+        //evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb,map);
 
+        Point p = gb.point(2, 46);//
 
         Leaf linearTreeResult = null;
         Leaf quadraticTreeResult = null;
         Pair<Point ,String> pair = null;
 
+        linearTreeResult = linearTree.search(p);
+        quadraticTreeResult = quadraticTree.search(p);
+
+        /*
         while(linearTreeResult == null || quadraticTreeResult == null) {
             pair = getRandomPoint(gb, global_bounds, allFeatures,map);
             if (linearTreeResult == null) {
@@ -114,6 +119,7 @@ public class Main {
                 quadraticTreeResult = quadraticTree.search(pair.getLeft());
             }
         }
+        */
 
         // Linear R-Tree
         System.out.println("Linear R-Tree:");
@@ -131,14 +137,15 @@ public class Main {
         }
 
 
+
         // Show results on map
-        showMap(featureSource,linearTreeResult,quadraticTreeResult, gb, allFeatures, pair.getLeft());
+        //showMap(featureSource,linearTreeResult,quadraticTreeResult, gb, allFeatures, pair.getLeft());
 
     }
 
     public static void evaluateRtreeVariants(SimpleFeatureCollection allFeatures,LinearRectangleTree linearTree,
                                              QuadraticRectangleTree quadraticTree, ReferencedEnvelope global_bounds, GeometryBuilder gb,String map) {
-        int nQueries = 10;
+        int nQueries = 100;
         long startTime, elapsedTime;
         List <Pair<Point,String>> linearOK = new ArrayList<>();
         List <Pair<Point,String>> quadraticOK = new ArrayList<>();
