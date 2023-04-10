@@ -6,6 +6,7 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.locationtech.jts.geom.Point;
 
 import java.util.List;
+import java.util.Stack;
 
 
 public abstract class RectangleTree {
@@ -26,6 +27,7 @@ public abstract class RectangleTree {
         if (root.isEmpty()) {
             Leaf newLeaf = new Leaf(label, feature);
             root.addLeaf(newLeaf);
+
         } else {
             // Sinon, trouvez le nœud approprié pour insérer la nouvelle feuille
             Node chosenNode = chooseNode(root, feature);
@@ -33,65 +35,69 @@ public abstract class RectangleTree {
             // Ajoutez la nouvelle feuille au nœud choisi et mettez à jour le MBR
             Node newNode = addLeaf(chosenNode, label, feature);
 
-            // Si addLeaf renvoie un nouveau nœud (split nécessaire), mettez à jour l'arbre
-            if (newNode != null) {
-                // Si la racine doit être divisée, créez une nouvelle racine
-                if (root.shouldSplit(N)) {
-                    Node newRoot = new Node();
-                    newRoot.addSubNode(root);
-                    newRoot.addSubNode(newNode);
-                    root = newRoot;
-                } else {
-                    // Sinon, ajoutez simplement le nouveau nœud à la racine
-                    root.addSubNode(newNode);
-                }
-            }
+            // Si un nouveau nœud a été créé, ajustez l'arbre
+            adjustTree(chosenNode, newNode);
         }
     }
+
+    private void adjustTree(Node node, Node newNode) {
+        // Mettez à jour le MBR du nœud actuel
+        node.updateMBR();
+
+        // Si le nœud actuel a un parent, ajustez l'arbre récursivement
+        if (node.getParent() != null) {
+            adjustTree(node.getParent(), newNode);
+        } else if (newNode != null) {
+            // Si nous sommes à la racine et qu'un nouveau nœud a été créé, créez une nouvelle racine et ajoutez les nœuds existants
+            Node newRoot = new Node();
+            newRoot.addSubNode(node);
+            newRoot.addSubNode(newNode);
+            root = newRoot;
+        }
+    }
+
 
 
     protected Node chooseNode(Node node, SimpleFeature polygon) {
         Geometry geometry = (Geometry) polygon.getDefaultGeometry();
         Envelope polygonEnvelope = geometry.getEnvelopeInternal();
 
-        if (node.getSubNodes().isEmpty() || node.getSubNodes().get(0) instanceof Leaf) {
-            return node;
-        }
+        while (!node.getSubNodes().isEmpty() && !(node.getSubNodes().get(0) instanceof Leaf)) {
+            double minExpansion = Double.MAX_VALUE;
+            Node bestNode = null;
 
-        double minExpansion = Double.MAX_VALUE;
-        Node bestNode = null;
+            for (Node subnode : node.getSubNodes()) {
+                Envelope expandedEnvelope = new Envelope(subnode.getMBR());
+                expandedEnvelope.expandToInclude(polygonEnvelope);
+                double expansion = expandedEnvelope.getArea() - subnode.getMBR().getArea();
 
-        for (Node subnode : node.getSubNodes()) {
-            Envelope expandedEnvelope = new Envelope(subnode.getMBR());
-            expandedEnvelope.expandToInclude(polygonEnvelope);
-            double expansion = expandedEnvelope.getArea() - subnode.getMBR().getArea();
-
-            if (expansion < minExpansion) {
-                minExpansion = expansion;
-                bestNode = subnode;
-            } else if (expansion == minExpansion) {
-                assert bestNode != null;
-                if (subnode.getMBR().getArea() < bestNode.getMBR().getArea()) {
+                if (expansion < minExpansion) {
+                    minExpansion = expansion;
                     bestNode = subnode;
+                } else if (expansion == minExpansion) {
+                    if (subnode.getMBR().getArea() < bestNode.getMBR().getArea()) {
+                        bestNode = subnode;
+                    }
                 }
             }
+            node = bestNode;
         }
-
-        assert bestNode != null;
-        return chooseNode(bestNode, polygon);
+        return node;
     }
+
+
 
     protected Node addLeaf(Node node, String label, SimpleFeature polygon) {
         Geometry geometry = (Geometry) polygon.getDefaultGeometry();
         Envelope polygonEnvelope = geometry.getEnvelopeInternal();
 
         if (node.getSubNodes().isEmpty() || node.getSubNodes().get(0) instanceof Leaf) {
-            node.getSubNodes().add(new Leaf(label, polygon));
+            node.addSubNode(new Leaf(label, polygon));
         } else {
             Node selectedNode = chooseNode(node, polygon);
             Node newNode = addLeaf(selectedNode, label, polygon);
             if (newNode != null) {
-                node.getSubNodes().add(newNode);
+                node.addSubNode(newNode);
             }
         }
         node.expandEnvelope(polygonEnvelope);
@@ -103,78 +109,71 @@ public abstract class RectangleTree {
         }
     }
 
+
     protected Node split(Node node) {
-
-        int size = node.getSubNodes().size();
+        // Sélectionnez deux nœuds "graines" en utilisant la méthode pickSeeds
         int[] seeds = pickSeeds(node.getSubNodes());
+        // Créez deux nouveaux groupes vides pour les nœuds séparés
+        Node newGroup1 = new Node();
+        Node newGroup2 = new Node();
 
-        Node group1 = new Node();
-        Node group2 = new Node();
-        group1.getSubNodes().add(node.getSubNodes().get(seeds[0]));
-        group2.getSubNodes().add(node.getSubNodes().get(seeds[1]));
-        group1.expandEnvelope(node.getSubNodes().get(seeds[0]).getMBR());
-        group2.expandEnvelope(node.getSubNodes().get(seeds[1]).getMBR());
+        // Récupérez les MBR initiaux pour chaque groupe de graines
+        Envelope mbr1 = node.getSubNodes().get(seeds[0]).getMBR();
+        Envelope mbr2 = node.getSubNodes().get(seeds[1]).getMBR();
 
-        boolean[] assigned = new boolean[size];
+        // Ajoutez les nœuds "graines" aux nouveaux groupes
+        newGroup1.addSubNode(node.getSubNodes().get(seeds[0]));
+        newGroup2.addSubNode(node.getSubNodes().get(seeds[1]));
+
+        // Créez un tableau pour suivre les nœuds déjà attribués
+        boolean[] assigned = new boolean[node.getSubNodes().size()];
         assigned[seeds[0]] = true;
         assigned[seeds[1]] = true;
-        int remaining = size - 2;
 
+        // Comptez le nombre de nœuds restants à attribuer
+        int remaining = node.getSubNodes().size() - 2;
+
+        // Tant qu'il reste des nœuds à attribuer
         while (remaining > 0) {
-            int nextNodeIndex = pickNext(node.getSubNodes(), group1.getMBR(), group2.getMBR(), assigned);
-            Envelope e1 = new Envelope(group1.getMBR());
-            Envelope e2 = new Envelope(group2.getMBR());
-            e1.expandToInclude(node.getSubNodes().get(nextNodeIndex).getMBR());
-            e2.expandToInclude(node.getSubNodes().get(nextNodeIndex).getMBR());
+            // Utilisez la méthode pickNext pour choisir le nœud suivant à attribuer
+            int next = pickNext(node.getSubNodes(), mbr1, mbr2, assigned);
+            Envelope nextMBR = node.getSubNodes().get(next).getMBR();
 
-            double area1 = group1.getMBR().getArea();
-            double area2 = group2.getMBR().getArea();
-            double expandedArea1 = e1.getArea();
-            double expandedArea2 = e2.getArea();
+            // Calculez le coût d'expansion pour inclure le nœud suivant dans les MBR de chaque groupe
+            Envelope mbr1Expanded = new Envelope(mbr1);
+            mbr1Expanded.expandToInclude(nextMBR);
+            double cost1 = mbr1Expanded.getArea() - mbr1.getArea();
 
-            if (expandedArea1 - area1 < expandedArea2 - area2) {
-                group1.getSubNodes().add(node.getSubNodes().get(nextNodeIndex));
-                group1.expandEnvelope(node.getSubNodes().get(nextNodeIndex).getMBR());
+            Envelope mbr2Expanded = new Envelope(mbr2);
+            mbr2Expanded.expandToInclude(nextMBR);
+            double cost2 = mbr2Expanded.getArea() - mbr2.getArea();
+
+            // Attribuez le nœud suivant au groupe avec le coût d'expansion le plus faible
+            if (cost1 < cost2) {
+                newGroup1.addSubNode(node.getSubNodes().get(next));
+                mbr1.expandToInclude(nextMBR);
             } else {
-                group2.getSubNodes().add(node.getSubNodes().get(nextNodeIndex));
-                group2.expandEnvelope(node.getSubNodes().get(nextNodeIndex).getMBR());
+                newGroup2.addSubNode(node.getSubNodes().get(next));
+                mbr2.expandToInclude(nextMBR);
             }
 
-            assigned[nextNodeIndex] = true;
+            // Marquez le nœud suivant comme attribué et décrémentez le nombre de nœuds restants
+            assigned[next] = true;
             remaining--;
         }
 
-        node.setSubNodes(group1.getSubNodes());
-        node.setMBR(group1.getMBR());
-        return group2;
+        // Remplacez les nœuds du nœud d'origine par les nœuds du premier groupe
+        node.setSubNodes(newGroup1.getSubNodes());
+        // Retournez le deuxième groupe comme nouveau nœud
+        return newGroup2;
     }
+
 
     protected abstract int[] pickSeeds(List<Node> subnodes);
 
-    private int pickNext(List<Node> subnodes, Envelope mbr1, Envelope mbr2, boolean[] assigned) {
-        double maxPreference = Double.NEGATIVE_INFINITY;
-        int nextIndex = -1;
+    protected abstract int pickNext(List<Node> subnodes, Envelope mbr1, Envelope mbr2, boolean[] assigned);
 
-        for (int i = 0; i < subnodes.size(); i++) {
-            if (!assigned[i]) {
-                Envelope e = subnodes.get(i).getMBR();
-                Envelope mbr1Expanded = new Envelope(mbr1);
-                mbr1Expanded.expandToInclude(e);
-                double cost1 = mbr1Expanded.getArea() - mbr1.getArea();
 
-                Envelope mbr2Expanded = new Envelope(mbr2);
-                mbr2Expanded.expandToInclude(e);
-                double cost2 = mbr2Expanded.getArea() - mbr2.getArea();
-
-                double preference = Math.abs(cost1 - cost2);
-                if (preference > maxPreference) {
-                    maxPreference = preference;
-                    nextIndex = i;
-                }
-            }
-        }
-        return nextIndex;
-    }
 
     public Leaf search(Point point) {
         return searchHelper(this.getRoot(), point);
@@ -202,6 +201,7 @@ public abstract class RectangleTree {
         return null;
     }
 
+
     public int getSize() {
         return sizeTree(root);
     }
@@ -221,6 +221,41 @@ public abstract class RectangleTree {
             return count;
         }
     }
+
+    public void printTree() {
+        if (root == null) {
+            System.out.println("Empty tree");
+            return;
+        }
+
+        Stack<Node> stack = new Stack<>();
+        stack.push(root);
+        Stack<Integer> levelStack = new Stack<>();
+        levelStack.push(0);
+
+        while (!stack.isEmpty()) {
+            Node node = stack.pop();
+            int level = levelStack.pop();
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < level; i++) {
+                sb.append("  ");
+            }
+            sb.append("Level ").append(level).append(": ");
+            if (node instanceof Leaf leaf) {
+                sb.append("Leaf: ").append(leaf.getLabel());
+            } else {
+                sb.append("Node MBR: ").append(node.getMBR().toString());
+                for (Node subnode : node.getSubNodes()) {
+                    stack.push(subnode);
+                    levelStack.push(level + 1);
+                }
+            }
+            System.out.println(sb.toString());
+        }
+    }
+
+
 
 
 

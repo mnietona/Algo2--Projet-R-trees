@@ -1,7 +1,6 @@
 package ulb.algo2;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.locationtech.jts.geom.Polygon;
 import org.opengis.feature.simple.SimpleFeature;
 
 public class RectangleTreeBuilder {
@@ -18,6 +17,7 @@ public class RectangleTreeBuilder {
                     case "World" -> {
                         String label2 = feature.getProperty("NAME_FR").getValue().toString();
                         rectangleTree.insert(label2, feature);
+
                     }
                     case "France" -> {
                         String label3 = feature.getProperty("nom").getValue().toString();

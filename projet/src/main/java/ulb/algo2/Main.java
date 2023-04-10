@@ -86,13 +86,14 @@ public class Main {
         final int N = 10;
         LinearRectangleTree linearTree = new LinearRectangleTree(N);
         RectangleTreeBuilder.buildTree(linearTree, allFeatures, map);
-        QuadraticRectangleTree quadraticTree = new QuadraticRectangleTree(N);
-        RectangleTreeBuilder.buildTree(quadraticTree, allFeatures, map);
-
         System.out.println("Linear R-Tree taille :");
         System.out.println(linearTree.getSize());
+
+        QuadraticRectangleTree quadraticTree = new QuadraticRectangleTree(N);
+        RectangleTreeBuilder.buildTree(quadraticTree, allFeatures, map);
         System.out.println("Quadratic R-Tree taille :");
         System.out.println(quadraticTree.getSize());
+
 
 
 
@@ -104,7 +105,7 @@ public class Main {
 
         Leaf linearTreeResult = null;
         Leaf quadraticTreeResult = null;
-        Pair<Point ,String> pair = null;
+        Pair <Point,String> pair;
 
         while(linearTreeResult == null || quadraticTreeResult == null) {
             pair = getRandomPoint(gb, global_bounds, allFeatures,map);
@@ -115,6 +116,7 @@ public class Main {
                 quadraticTreeResult = quadraticTree.search(pair.getLeft());
             }
         }
+
 
         // Linear R-Tree
         System.out.println("Linear R-Tree:");
@@ -132,18 +134,18 @@ public class Main {
         }
 
 
+
         // Show results on map
-        showMap(featureSource,linearTreeResult,quadraticTreeResult, gb, allFeatures, pair.getLeft());
+        //showMap(featureSource,linearTreeResult,quadraticTreeResult, gb, allFeatures, pair.getLeft());
 
     }
 
     public static void evaluateRtreeVariants(SimpleFeatureCollection allFeatures,LinearRectangleTree linearTree,
                                              QuadraticRectangleTree quadraticTree, ReferencedEnvelope global_bounds, GeometryBuilder gb,String map) {
-        int nQueries = 1000;
+        int nQueries = 100;
         long startTime, elapsedTime;
         List <Pair<Point,String>> linearOK = new ArrayList<>();
         List <Pair<Point,String>> quadraticOK = new ArrayList<>();
-
 
         // Générer une liste de points à tester
         List<Pair<Point,String>> testPoints = new ArrayList<>();
@@ -154,31 +156,41 @@ public class Main {
 
         // Evaluation pour Linear R-Tree
         startTime = System.nanoTime();
-        System.out.println("Linear R-Tree:");
+        System.out.println("Search Linear R-Tree:");
         for (Pair<Point, String> pair : testPoints) {
             Leaf result = linearTree.search(pair.getLeft());
             if (result != null) {
-                linearOK.add(pair);
+                if (result.getLabel().equals(pair.getRight())) {
+                    linearOK.add(pair);
+                }
+                else {
+                    System.out.println("Wrong result for point " + pair.getLeft().toString());
+                }
             }
 
         }
         elapsedTime = System.nanoTime() - startTime;
         System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
-        System.out.println("Results found: " + linearOK.size() + "sur " + nQueries);
+        System.out.println("Results found: " + linearOK.size() + " sur " + nQueries);
 
         // Evaluation pour Quadratic R-Tree
         startTime = System.nanoTime();
-        System.out.println("Quadratic R-Tree:");
+        System.out.println("Search Quadratic R-Tree:");
         for (Pair<Point, String> pair : testPoints) {
             Leaf result = quadraticTree.search(pair.getLeft());
             if (result != null) {
-                quadraticOK.add(pair);
+                if (result.getLabel().equals(pair.getRight())) {
+                    quadraticOK.add(pair);
+                }
+                else {
+                    System.out.println("Wrong result for point " + pair.getLeft().toString());
+                }
             }
 
         }
         elapsedTime = System.nanoTime() - startTime;
         System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
-        System.out.println("Results found: " + quadraticOK.size() + "sur " + nQueries);
+        System.out.println("Results found: " + quadraticOK.size() + " sur " + nQueries);
 
         exit(0);
     }

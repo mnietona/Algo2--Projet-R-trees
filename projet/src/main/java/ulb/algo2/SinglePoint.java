@@ -52,11 +52,11 @@ public class SinglePoint {
      */
     public static void main(String[] args) throws Exception {
         // display a data store file chooser dialog for shapefiles
-        String filename="../projet/data/sh_statbel_statistical_sectors_31370_20220101.shp/sh_statbel_statistical_sectors_31370_20220101.shp";
+        //String filename="../projet/data/sh_statbel_statistical_sectors_31370_20220101.shp/sh_statbel_statistical_sectors_31370_20220101.shp";
 
         //String filename="../projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
         
-        //String filename="../projet/data/communes-20220101-shp/communes-20220101.shp";
+        String filename="../projet/data/communes-20220101-shp/communes-20220101.shp";
         
         File file = new File(filename);
         if (!file.exists())
@@ -79,7 +79,7 @@ public class SinglePoint {
         
         GeometryBuilder gb = new GeometryBuilder();
         //Point p = gb.point(152183, 167679);// Plaine
-        //Point p = gb.point(4.4, 50.8);// 
+        Point p = gb.point(4.4, 50.8);//
         //Point p = gb.point(58.0, 47.0);
         //Point p = gb.point(10.6,59.9);// Oslo
         //Point p = gb.point(-102, 36);
@@ -88,7 +88,7 @@ public class SinglePoint {
         //Point p = gb.point(169.2, -52.5);//NZ
         
         //Point p = gb.point(172.97365198326708, 1.8869725782923172);
-        Point p = gb.point(87.28987534807803, -48.76633090688074);
+        //Point p = gb.point(87.28987534807803, -48.76633090688074);
 
         
         //Point p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
