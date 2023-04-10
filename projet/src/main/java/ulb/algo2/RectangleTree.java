@@ -6,6 +6,7 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.locationtech.jts.geom.Point;
 
 import java.util.List;
+import java.util.Stack;
 
 
 public abstract class RectangleTree {
@@ -170,30 +171,9 @@ public abstract class RectangleTree {
 
     protected abstract int[] pickSeeds(List<Node> subnodes);
 
-    private int pickNext(List<Node> subnodes, Envelope mbr1, Envelope mbr2, boolean[] assigned) {
-        double maxPreference = Double.NEGATIVE_INFINITY;
-        int nextIndex = -1;
+    protected abstract int pickNext(List<Node> subnodes, Envelope mbr1, Envelope mbr2, boolean[] assigned);
 
-        for (int i = 0; i < subnodes.size(); i++) {
-            if (!assigned[i]) {
-                Envelope e = subnodes.get(i).getMBR();
-                Envelope mbr1Expanded = new Envelope(mbr1);
-                mbr1Expanded.expandToInclude(e);
-                double cost1 = mbr1Expanded.getArea() - mbr1.getArea();
 
-                Envelope mbr2Expanded = new Envelope(mbr2);
-                mbr2Expanded.expandToInclude(e);
-                double cost2 = mbr2Expanded.getArea() - mbr2.getArea();
-
-                double preference = Math.abs(cost1 - cost2);
-                if (preference > maxPreference) {
-                    maxPreference = preference;
-                    nextIndex = i;
-                }
-            }
-        }
-        return nextIndex;
-    }
 
     public Leaf search(Point point) {
         return searchHelper(this.getRoot(), point);
@@ -221,6 +201,7 @@ public abstract class RectangleTree {
         return null;
     }
 
+
     public int getSize() {
         return sizeTree(root);
     }
@@ -240,6 +221,41 @@ public abstract class RectangleTree {
             return count;
         }
     }
+
+    public void printTree() {
+        if (root == null) {
+            System.out.println("Empty tree");
+            return;
+        }
+
+        Stack<Node> stack = new Stack<>();
+        stack.push(root);
+        Stack<Integer> levelStack = new Stack<>();
+        levelStack.push(0);
+
+        while (!stack.isEmpty()) {
+            Node node = stack.pop();
+            int level = levelStack.pop();
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < level; i++) {
+                sb.append("  ");
+            }
+            sb.append("Level ").append(level).append(": ");
+            if (node instanceof Leaf leaf) {
+                sb.append("Leaf: ").append(leaf.getLabel());
+            } else {
+                sb.append("Node MBR: ").append(node.getMBR().toString());
+                for (Node subnode : node.getSubNodes()) {
+                    stack.push(subnode);
+                    levelStack.push(level + 1);
+                }
+            }
+            System.out.println(sb.toString());
+        }
+    }
+
+
 
 
 

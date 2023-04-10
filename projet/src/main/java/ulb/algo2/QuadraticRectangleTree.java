@@ -45,6 +45,42 @@ public class QuadraticRectangleTree extends RectangleTree {
         // Retourner les indices des deux graines sélectionnées
         return seeds;
     }
+    @Override
+    public int pickNext(List<Node> subNodes, Envelope mbr1, Envelope mbr2, boolean[] assigned) {
+        int nextNodeIndex = -1;
+        double maxCost = Double.NEGATIVE_INFINITY;
+
+        for (int i = 0; i < subNodes.size(); i++) {
+            // Ignorez les nœuds déjà attribués
+            if (assigned[i]) {
+                continue;
+            }
+
+            // Récupérez le MBR du nœud actuel
+            Envelope currentMBR = subNodes.get(i).getMBR();
+
+            // Calculez le coût d'expansion pour inclure le nœud actuel dans les MBR de chaque groupe
+            Envelope mbr1Expanded = new Envelope(mbr1);
+            mbr1Expanded.expandToInclude(currentMBR);
+            double cost1 = mbr1Expanded.getArea() - mbr1.getArea();
+
+            Envelope mbr2Expanded = new Envelope(mbr2);
+            mbr2Expanded.expandToInclude(currentMBR);
+            double cost2 = mbr2Expanded.getArea() - mbr2.getArea();
+
+            // Calculez le coût quadratique pour inclure le nœud actuel
+            double cost = cost1 * cost1 + cost2 * cost2;
+
+            // Mettez à jour le nœud suivant à attribuer si le coût quadratique est plus grand que la valeur précédente
+            if (cost > maxCost) {
+                maxCost = cost;
+                nextNodeIndex = i;
+            }
+        }
+
+        return nextNodeIndex;
+    }
+
 
 
 

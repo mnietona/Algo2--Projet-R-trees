@@ -83,7 +83,7 @@ public class Main {
 
         // Build R-Trees
 
-        final int N = 10000;
+        final int N = 10;
         LinearRectangleTree linearTree = new LinearRectangleTree(N);
         RectangleTreeBuilder.buildTree(linearTree, allFeatures, map);
         System.out.println("Linear R-Tree taille :");
@@ -95,21 +95,18 @@ public class Main {
         System.out.println(quadraticTree.getSize());
 
 
+
+
         // Get global bounds
         ReferencedEnvelope global_bounds = featureSource.getBounds();
         GeometryBuilder gb = new GeometryBuilder();
-        //evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb,map);
+        evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb,map);
 
-        Point p = gb.point(2, 46);//
 
         Leaf linearTreeResult = null;
         Leaf quadraticTreeResult = null;
-        Pair<Point ,String> pair = null;
+        Pair <Point,String> pair;
 
-        linearTreeResult = linearTree.search(p);
-        quadraticTreeResult = quadraticTree.search(p);
-
-        /*
         while(linearTreeResult == null || quadraticTreeResult == null) {
             pair = getRandomPoint(gb, global_bounds, allFeatures,map);
             if (linearTreeResult == null) {
@@ -119,7 +116,7 @@ public class Main {
                 quadraticTreeResult = quadraticTree.search(pair.getLeft());
             }
         }
-        */
+
 
         // Linear R-Tree
         System.out.println("Linear R-Tree:");
@@ -163,7 +160,12 @@ public class Main {
         for (Pair<Point, String> pair : testPoints) {
             Leaf result = linearTree.search(pair.getLeft());
             if (result != null) {
-                linearOK.add(pair);
+                if (result.getLabel().equals(pair.getRight())) {
+                    linearOK.add(pair);
+                }
+                else {
+                    System.out.println("Wrong result for point " + pair.getLeft().toString());
+                }
             }
 
         }
@@ -177,7 +179,12 @@ public class Main {
         for (Pair<Point, String> pair : testPoints) {
             Leaf result = quadraticTree.search(pair.getLeft());
             if (result != null) {
-                quadraticOK.add(pair);
+                if (result.getLabel().equals(pair.getRight())) {
+                    quadraticOK.add(pair);
+                }
+                else {
+                    System.out.println("Wrong result for point " + pair.getLeft().toString());
+                }
             }
 
         }
