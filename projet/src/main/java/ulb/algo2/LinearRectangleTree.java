@@ -11,26 +11,67 @@ public class LinearRectangleTree extends RectangleTree {
     }
 
     @Override
-    public int[] pickSeeds(List<Node> subnodes) {
-        int size = subnodes.size();
-        double maxWaste = Double.NEGATIVE_INFINITY;
+    protected int[] pickSeeds(List<Node> subnodes) {
         int[] seeds = new int[2];
+        double maxDiffX = Double.NEGATIVE_INFINITY;
+        double maxDiffY = Double.NEGATIVE_INFINITY;
+        int minIndexX = 0;
+        int maxIndexX = 0;
+        int minIndexY = 0;
+        int maxIndexY = 0;
 
-        for (int i = 0; i < size; i++) {
-            Envelope e1 = subnodes.get(i).getMBR();
-            for (int j = i + 1; j < size; j++) {
-                Envelope e2 = subnodes.get(j).getMBR();
-                Envelope combinedEnvelope = new Envelope(e1);
-                combinedEnvelope.expandToInclude(e2);
+        for (int i = 0; i < subnodes.size(); i++) {
+            double minX = subnodes.get(i).getMBR().getMinX();
+            double maxX = subnodes.get(i).getMBR().getMaxX();
+            double minY = subnodes.get(i).getMBR().getMinY();
+            double maxY = subnodes.get(i).getMBR().getMaxY();
 
-                double waste = combinedEnvelope.getArea() - e1.getArea() - e2.getArea();
-                if (waste > maxWaste) {
-                    maxWaste = waste;
-                    seeds[0] = i;
-                    seeds[1] = j;
+            double diffX = maxX - minX;
+            double diffY = maxY - minY;
+
+            if (diffX > maxDiffX) {
+                maxDiffX = diffX;
+                maxIndexX = i;
+            }
+
+            if (diffY > maxDiffY) {
+                maxDiffY = diffY;
+                maxIndexY = i;
+            }
+        }
+
+        int maxIndex;
+        double maxDiff;
+
+        // Choose the axis with the greatest total difference
+        if (maxDiffX > maxDiffY) {
+            maxIndex = maxIndexX;
+            maxDiff = maxDiffX;
+        } else {
+            maxIndex = maxIndexY;
+            maxDiff = maxDiffY;
+        }
+
+        seeds[0] = maxIndex;
+
+        double minOverlap = Double.MAX_VALUE;
+        int minIndex = 0;
+
+        for (int i = 0; i < subnodes.size(); i++) {
+            if (i != maxIndex) {
+                Envelope tempMBR = new Envelope(subnodes.get(maxIndex).getMBR());
+                tempMBR.expandToInclude(subnodes.get(i).getMBR());
+                double overlap = tempMBR.getArea() - subnodes.get(maxIndex).getMBR().getArea() - subnodes.get(i).getMBR().getArea();
+
+                if (overlap < minOverlap) {
+                    minOverlap = overlap;
+                    minIndex = i;
                 }
             }
         }
+
+        seeds[1] = minIndex;
+
         return seeds;
     }
 
