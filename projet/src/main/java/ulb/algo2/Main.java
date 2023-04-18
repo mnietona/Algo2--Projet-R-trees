@@ -50,10 +50,13 @@ public class Main {
 
         String filename = "";
         String map = "";
+        int N = 10;
+
         switch (choice) {
             case 0 -> {
                 filename = "../projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
                 map = "World";
+                N = 4;
                 System.out.println("the map : " + map);
             }
             case 1 -> {
@@ -64,6 +67,7 @@ public class Main {
             case 2 -> {
                 filename = "../projet/data/communes-20220101-shp/communes-20220101.shp";
                 map = "France";
+                N = 10000;
                 System.out.println("the map : " + map);
             }
             default -> {
@@ -82,105 +86,95 @@ public class Main {
 
 
         // Build R-Trees
-
-        final int N = 10;
+        System.out.println("Building R-Trees...");
         LinearRectangleTree linearTree = new LinearRectangleTree(N);
         RectangleTreeBuilder.buildTree(linearTree, allFeatures, map);
-        System.out.println("Linear R-Tree taille :");
-        System.out.println(linearTree.getSize());
 
         QuadraticRectangleTree quadraticTree = new QuadraticRectangleTree(N);
         RectangleTreeBuilder.buildTree(quadraticTree, allFeatures, map);
-        System.out.println("Quadratic R-Tree taille :");
-        System.out.println(quadraticTree.getSize());
 
-
-
+        System.out.println("R-Trees built.\n");
 
         // Get global bounds
         ReferencedEnvelope global_bounds = featureSource.getBounds();
         GeometryBuilder gb = new GeometryBuilder();
         evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb,map);
 
-
-        Leaf linearTreeResult = null;
-        Leaf quadraticTreeResult = null;
-        Pair <Point,String> pair;
-
-        while(linearTreeResult == null || quadraticTreeResult == null) {
-            pair = getRandomPoint(gb, global_bounds, allFeatures,map);
-            if (linearTreeResult == null) {
-                linearTreeResult = linearTree.search(pair.getLeft());
-            }
-            if (quadraticTreeResult == null) {
-                quadraticTreeResult = quadraticTree.search(pair.getLeft());
-            }
-        }
-
-
-        // Linear R-Tree
-        System.out.println("Linear R-Tree:");
-        System.out.println(linearTreeResult.getLabel());
-
-        // Quadratic R-Tree
-        System.out.println("Quadratic R-Tree:");
-        System.out.println(quadraticTreeResult.getLabel());
-
-
-        if (linearTreeResult.getLabel().equals(quadraticTreeResult.getLabel())) {
-            System.out.println("The two trees returned the same result.");
-        }else{
-            System.out.println("The two trees returned different results.");
-        }
-
-
-
-        // Show results on map
-        //showMap(featureSource,linearTreeResult,quadraticTreeResult, gb, allFeatures, pair.getLeft());
-
     }
+    public static Pair<Point,String> getRandomPoint(GeometryBuilder gb, ReferencedEnvelope global_bounds, SimpleFeatureCollection allFeatures,String map) {
+        Random r = new Random();
+        Point p = null;
+        SimpleFeature target=null;
+        String label = "";
+
+        while (target == null) {
+
+            p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
+                    r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
+            try ( SimpleFeatureIterator iterator = allFeatures.features() ){
+                while( iterator.hasNext()){
+                    SimpleFeature feature = iterator.next();
+
+                    MultiPolygon polygon = (MultiPolygon) feature.getDefaultGeometry();
+
+                    if (polygon != null && polygon.contains(p)) {
+                        target = feature;
+                        break;
+                    }
+                }
+                if (target != null) {
+                    switch (map) {
+                        case "Belgium" -> label = target.getProperty("T_SEC_FR").getValue().toString();
+                        case "World" -> label = target.getProperty("NAME_FR").getValue().toString();
+                        case "France" -> label = target.getProperty("nom").getValue().toString();
+                    }
+                }
+
+            }
+        }
+        return  Pair.of(p, label);
+    }
+
 
     public static void evaluateRtreeVariants(SimpleFeatureCollection allFeatures,LinearRectangleTree linearTree,
                                              QuadraticRectangleTree quadraticTree, ReferencedEnvelope global_bounds, GeometryBuilder gb,String map) {
         int nQueries = 100;
-        long startTime, elapsedTime;
         List <Pair<Point,String>> linearOK = new ArrayList<>();
         List <Pair<Point,String>> quadraticOK = new ArrayList<>();
 
-        // Générer une liste de points à tester
+        System.out.println("Generating "+ nQueries +" random points...");
+
+        // Génère des points aléatoires
         List<Pair<Point,String>> testPoints = new ArrayList<>();
         for (int i = 0; i < nQueries; i++) {
             Pair<Point ,String> result  = getRandomPoint(gb, global_bounds, allFeatures, map);
             testPoints.add(result);
         }
+        System.out.println("Random points generated.\n");
 
         // Evaluation pour Linear R-Tree
-        startTime = System.nanoTime();
-        System.out.println("Search Linear R-Tree:");
-        for (Pair<Point, String> pair : testPoints) {
-            Leaf result = linearTree.search(pair.getLeft());
-            if (result != null) {
-                if (result.getLabel().equals(pair.getRight())) {
-                    linearOK.add(pair);
-                }
-                else {
-                    System.out.println("Wrong result for point " + pair.getLeft().toString());
-                }
-            }
-
-        }
-        elapsedTime = System.nanoTime() - startTime;
-        System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
-        System.out.println("Results found: " + linearOK.size() + " sur " + nQueries);
+        calculTime(linearTree, nQueries, linearOK, testPoints);
 
         // Evaluation pour Quadratic R-Tree
+        calculTime(quadraticTree, nQueries, quadraticOK, testPoints);
+
+        exit(0);
+    }
+
+    private static void calculTime(RectangleTree Tree, int nQueries, List<Pair<Point, String>> treeLabel, List<Pair<Point, String>> testPoints) {
+        long startTime;
+        long elapsedTime;
         startTime = System.nanoTime();
-        System.out.println("Search Quadratic R-Tree:");
+        if (Tree instanceof LinearRectangleTree)
+            System.out.println("Search Linear R-Tree:");
+        else
+            System.out.println("Search Quadratic R-Tree:");
+
         for (Pair<Point, String> pair : testPoints) {
-            Leaf result = quadraticTree.search(pair.getLeft());
+            Leaf result = Tree.search(pair.getLeft());
             if (result != null) {
                 if (result.getLabel().equals(pair.getRight())) {
-                    quadraticOK.add(pair);
+                    treeLabel.add(pair);
                 }
                 else {
                     System.out.println("Wrong result for point " + pair.getLeft().toString());
@@ -190,9 +184,7 @@ public class Main {
         }
         elapsedTime = System.nanoTime() - startTime;
         System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
-        System.out.println("Results found: " + quadraticOK.size() + " sur " + nQueries);
-
-        exit(0);
+        System.out.println("Results found: " + treeLabel.size() + " sur " + nQueries+"\n");
     }
 
 
@@ -247,41 +239,5 @@ public class Main {
         // Now display the map
         JMapFrame.showMap(map);
     }
-
-    public static Pair<Point,String> getRandomPoint(GeometryBuilder gb, ReferencedEnvelope global_bounds, SimpleFeatureCollection allFeatures,String map) {
-        Random r = new Random();
-        Point p = null;
-        SimpleFeature target=null;
-        String label = "";
-
-        while (target == null) {
-
-            p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
-                    r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
-            try ( SimpleFeatureIterator iterator = allFeatures.features() ){
-                while( iterator.hasNext()){
-                    SimpleFeature feature = iterator.next();
-
-                    MultiPolygon polygon = (MultiPolygon) feature.getDefaultGeometry();
-
-                    if (polygon != null && polygon.contains(p)) {
-                        target = feature;
-                        break;
-                    }
-                }
-                if (target != null) {
-                    switch (map) {
-                        case "Belgium" -> label = target.getProperty("T_SEC_FR").getValue().toString();
-                        case "World" -> label = target.getProperty("NAME_FR").getValue().toString();
-                        case "France" -> label = target.getProperty("nom").getValue().toString();
-                    }
-                }
-
-            }
-        }
-        return  Pair.of(p, label);
-    }
-
-
 
 }

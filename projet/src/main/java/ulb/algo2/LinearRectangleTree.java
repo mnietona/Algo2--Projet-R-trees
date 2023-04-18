@@ -2,7 +2,6 @@ package ulb.algo2;
 
 import org.locationtech.jts.geom.Envelope;
 
-import java.awt.*;
 import java.util.List;
 
 public class LinearRectangleTree extends RectangleTree {
@@ -15,9 +14,7 @@ public class LinearRectangleTree extends RectangleTree {
         int[] seeds = new int[2];
         double maxDiffX = Double.NEGATIVE_INFINITY;
         double maxDiffY = Double.NEGATIVE_INFINITY;
-        int minIndexX = 0;
         int maxIndexX = 0;
-        int minIndexY = 0;
         int maxIndexY = 0;
 
         for (int i = 0; i < subnodes.size(); i++) {
@@ -41,15 +38,12 @@ public class LinearRectangleTree extends RectangleTree {
         }
 
         int maxIndex;
-        double maxDiff;
 
         // Choose the axis with the greatest total difference
         if (maxDiffX > maxDiffY) {
             maxIndex = maxIndexX;
-            maxDiff = maxDiffX;
         } else {
             maxIndex = maxIndexY;
-            maxDiff = maxDiffY;
         }
 
         seeds[0] = maxIndex;
