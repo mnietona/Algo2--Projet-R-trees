@@ -121,17 +121,21 @@ public class Main {
         Leaf quadraticTreeResult = quadraticTree.search(randomPoint.getLeft());
         System.out.println("Random point: " + randomPoint.getLeft().toString());
         System.out.println("Label of the random point: " + randomPoint.getRight());
-        if (linearTreeResult == null) {
+
+        if (linearTreeResult != null) {
+            System.out.println("Linear R-Tree result: " + linearTreeResult.getLabel());
+            showMapForTree(featureSource, linearTreeResult, gb, allFeatures, randomPoint.getLeft(), Color.red, 2.0f, "Linear R-Tree");
+        }else {
             System.out.println("Linear R-Tree result: null");
         }
-        if (quadraticTreeResult == null) {
+
+        if (quadraticTreeResult != null) {
+            System.out.println("Quadratic R-Tree result: " + quadraticTreeResult.getLabel());
+            showMapForTree(featureSource, quadraticTreeResult, gb, allFeatures, randomPoint.getLeft(), Color.blue, 4.0f, "Quadratic R-Tree");
+        }else {
             System.out.println("Quadratic R-Tree result: null");
         }
-        if (linearTreeResult != null && quadraticTreeResult != null){
-            System.out.println("Linear R-Tree result: " + linearTreeResult.getLabel());
-            System.out.println("Quadratic R-Tree result: " + quadraticTreeResult.getLabel());
-            showMap(featureSource, linearTreeResult, quadraticTreeResult, gb, allFeatures, randomPoint.getLeft());
-        }
+
 
     }
 
@@ -221,11 +225,12 @@ public class Main {
     }
 
 
-    public static void showMap( SimpleFeatureSource featureSource, Leaf linearTreeResult, Leaf quadraticTreeResult,
-                                GeometryBuilder gb, SimpleFeatureCollection allFeatures, Point p) {
+    public static void showMapForTree(SimpleFeatureSource featureSource, Leaf treeResult,
+                                      GeometryBuilder gb, SimpleFeatureCollection allFeatures, Point p,
+                                      Color treeColor, float treeStrokeWidth, String treeTitle) {
         // Display Map
         MapContent map = new MapContent();
-        map.setTitle("Projet INFO-F203");
+        map.setTitle(treeTitle);
 
         Style style = SLD.createSimpleStyle(featureSource.getSchema());
         Layer layer = new FeatureLayer(featureSource, style);
@@ -233,44 +238,31 @@ public class Main {
 
         ListFeatureCollection collection = new ListFeatureCollection(featureSource.getSchema());
         SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(featureSource.getSchema());
-        SimpleFeatureBuilder featureBuilder2 = new SimpleFeatureBuilder(featureSource.getSchema());
 
-        SimpleFeature linear = linearTreeResult.getPolygon();
-        SimpleFeature quadratic = quadraticTreeResult.getPolygon();
+        SimpleFeature tree = treeResult.getPolygon();
 
-        //Add linear R-Tree result MBR
-        featureBuilder.add(gb.box(linear.getBounds().getMinX(),
-                linear.getBounds().getMinY(),
-                linear.getBounds().getMaxX(),
-                linear.getBounds().getMaxY()
+        // Add tree result MBR
+        featureBuilder.add(gb.box(tree.getBounds().getMinX(),
+                tree.getBounds().getMinY(),
+                tree.getBounds().getMaxX(),
+                tree.getBounds().getMaxY()
         ));
         collection.add(featureBuilder.buildFeature(null));
-
-        // Add quadratic R-Tree result MBR
-        featureBuilder2.add(gb.box(quadratic.getBounds().getMinX(),
-                quadratic.getBounds().getMinY(),
-                quadratic.getBounds().getMaxX(),
-                quadratic.getBounds().getMaxY()
-        ));
-        collection.add(featureBuilder2.buildFeature(null));
 
         // Add search point (uncomment and customize if needed)
         Polygon c = gb.circle(p.getX(), p.getY(), allFeatures.getBounds().getWidth() / 200, 10);
         featureBuilder.add(c);
         collection.add(featureBuilder.buildFeature(null));
 
-        // couleur pour quadrtic tree
-        Style style2 = SLD.createLineStyle(Color.blue, 4.0f);
-        // couleur pour linear tree
-        Style style3 = SLD.createLineStyle(Color.red, 2.0f);
+        // couleur pour l'arbre
+        Style treeStyle = SLD.createLineStyle(treeColor, treeStrokeWidth);
 
-        Layer layer2 = new FeatureLayer(collection, style2);
-        Layer layer3 = new FeatureLayer(collection, style3);
-        map.addLayer(layer2);
-        map.addLayer(layer3);
+        Layer treeLayer = new FeatureLayer(collection, treeStyle);
+        map.addLayer(treeLayer);
 
         // Now display the map
         JMapFrame.showMap(map);
+
     }
 
 }
