@@ -46,6 +46,7 @@ public class Main {
         System.out.println("0: World");
         System.out.println("1: Belgium");
         System.out.println("2: France");
+        System.out.println("3: Turquie");
         int choice = scanner.nextInt();
 
         String filename = "";
@@ -66,6 +67,11 @@ public class Main {
             case 2 -> {
                 filename = "../projet/data/communes-20220101-shp/communes-20220101.shp";
                 map = "France";
+                System.out.println("the map : " + map);
+            }
+            case 3 -> {
+                filename = "../projet/data/TUR_adm/TUR_adm2.shp";
+                map = "Turquie";
                 System.out.println("the map : " + map);
             }
             default -> {
@@ -165,6 +171,7 @@ public class Main {
                         case "Belgium" -> label = target.getProperty("T_SEC_FR").getValue().toString();
                         case "World" -> label = target.getProperty("NAME_FR").getValue().toString();
                         case "France" -> label = target.getProperty("nom").getValue().toString();
+                        case "Turquie" -> label = target.getProperty("NAME_2").getValue().toString();
                     }
                 }
 
@@ -214,7 +221,7 @@ public class Main {
                     treeLabel.add(pair);
                 }
                 else {
-                    System.out.println("Wrong result for point " + pair.getLeft().toString());
+                    System.out.println("Wrong result for point " + pair.getLeft());
                 }
             }
 

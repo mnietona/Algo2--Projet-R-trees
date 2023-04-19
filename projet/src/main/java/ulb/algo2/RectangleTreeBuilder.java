@@ -23,6 +23,10 @@ public class RectangleTreeBuilder {
                         String label3 = feature.getProperty("nom").getValue().toString();
                         rectangleTree.insert(label3, feature);
                     }
+                    case "Turquie" -> {
+                        String label4 = feature.getProperty("NAME_2").getValue().toString();
+                        rectangleTree.insert(label4, feature);
+                    }
                 }
 
             }
