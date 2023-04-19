@@ -1,6 +1,6 @@
-# Recherche efficace de points avec R-trees
+# Projet R-trees
 
-Ce projet vise à implémenter et comparer les variantes quadratique et linéaire des R-trees pour optimiser la détermination de l'appartenance de points à des polygones dans un contexte de données géospatiales et cartographiques.
+Ce projet vise à implémenter et comparer les variantes quadratique et linéaire des R-trees pour la recherche d'un point. 
 
 ## Prérequis
 Pour exécuter le projet, vous devez installer les outils suivants :
@@ -11,7 +11,6 @@ Pour exécuter le projet, vous devez installer les outils suivants :
 ## Téléchargement et installation
 1. Téléchargez et installez le JDK depuis le site Web d'Oracle (https://www.oracle.com/java/technologies/downloads/).
 2. Téléchargez et installez la dernière version d'IntelliJ IDEA Community ou Ultimate depuis le site Web de JetBrains (https://www.jetbrains.com/idea/download/).
-Ajout des données
 
 ## Ajout des données 
 Pour utiliser les données cartographiques, ajoutez le dossier ```data``` contenant les trois cartes fournies dans l'énoncé du projet. Placez ce dossier à l'intérieur du dossier principal ```projet```.
