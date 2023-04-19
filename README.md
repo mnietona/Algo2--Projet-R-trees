@@ -23,8 +23,10 @@ Pour exécuter le projet, vous devez installer les outils suivants :
 ## Fonctionnement du programme
 Une fois le programme lancé, voici les étapes qui se déroulent :
 
-1. L'utilisateur choisit une carte (map) à utiliser pour le traitement des données.
-2. Les R-trees (quadratique et linéaire) sont créés à partir des données de la carte sélectionnée.
-3. Générez une série de points aléatoires à utiliser pour effectuer la recherche de polygones. Assurez-vous que chacun de ces points est valide et non nul. **Veuillez noter que cette étape peut prendre du temps pour trouver un point aléatoire valide et non nul.**
-4. La méthode `search` est appelée sur ces points pour déterminer à quel polygone chaque point appartient.
-5. Les résultats des recherches et les performances des deux variantes des R-trees sont affichés et peuvent être analysés par l'utilisateur.
+1. L'utilisateur choisit une carte parmi trois options : le monde, la Belgique et la France.
+2. Le programme construit deux R-trees : un R-tree linéaire et un R-tree quadratique. Les deux arbres sont construits à l'aide des données du fichier .shp.
+3. L'utilisateur est invité à choisir entre deux options :
+   1. Évaluer les R-trees.
+      - Le programme évalue les deux R-trees en calculant le temps d'exécution de la recherche de points. (Les points recherchés sont tirés au hasard, mais ne sont jamais null.)
+   2. Afficher le résultat de la recherche d'un point sur la carte.
+

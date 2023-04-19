@@ -56,7 +56,6 @@ public class Main {
             case 0 -> {
                 filename = "../projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
                 map = "World";
-                N = 4;
                 System.out.println("the map : " + map);
             }
             case 1 -> {
@@ -67,7 +66,6 @@ public class Main {
             case 2 -> {
                 filename = "../projet/data/communes-20220101-shp/communes-20220101.shp";
                 map = "France";
-                N = 10000;
                 System.out.println("the map : " + map);
             }
             default -> {
@@ -87,19 +85,56 @@ public class Main {
 
         // Build R-Trees
         System.out.println("Building R-Trees...");
+        long startTime = System.nanoTime();
         LinearRectangleTree linearTree = new LinearRectangleTree(N);
         RectangleTreeBuilder.buildTree(linearTree, allFeatures, map);
-        System.out.println("Linear R-Tree built.");
+        long endTime = System.nanoTime();
+        System.out.println("Linear R-Tree built in " + TimeUnit.NANOSECONDS.toMillis(endTime - startTime) + " ms.");
+
         QuadraticRectangleTree quadraticTree = new QuadraticRectangleTree(N);
         RectangleTreeBuilder.buildTree(quadraticTree, allFeatures, map);
-        System.out.println("Quadratic R-Trees built.\n");
+        endTime = System.nanoTime();
+        System.out.println("Quadratic R-Trees built in " + TimeUnit.NANOSECONDS.toMillis(endTime - startTime) + " ms.\n");
 
         // Get global bounds
         ReferencedEnvelope global_bounds = featureSource.getBounds();
         GeometryBuilder gb = new GeometryBuilder();
-        evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb,map);
+
+        System.out.println("Choose an option:");
+        System.out.println("0: Evaluate the R-Trees");
+        System.out.println("1: Display the R-Trees");
+        choice = scanner.nextInt();
+        if (choice == 0) {
+            evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb,map);
+        }else if (choice == 1) {
+            mapResult(map, featureSource, allFeatures, linearTree, quadraticTree, global_bounds, gb);
+        }else{
+            System.out.println("Wrong choice");
+            exit(0);
+        }
 
     }
+
+    private static void mapResult(String map, SimpleFeatureSource featureSource, SimpleFeatureCollection allFeatures, LinearRectangleTree linearTree, QuadraticRectangleTree quadraticTree, ReferencedEnvelope global_bounds, GeometryBuilder gb) {
+        Pair<Point, String> randomPoint = getRandomPoint(gb, global_bounds, allFeatures, map);
+        Leaf linearTreeResult = linearTree.search(randomPoint.getLeft());
+        Leaf quadraticTreeResult = quadraticTree.search(randomPoint.getLeft());
+        System.out.println("Random point: " + randomPoint.getLeft().toString());
+        System.out.println("Label of the random point: " + randomPoint.getRight());
+        if (linearTreeResult == null) {
+            System.out.println("Linear R-Tree result: null");
+        }
+        if (quadraticTreeResult == null) {
+            System.out.println("Quadratic R-Tree result: null");
+        }
+        if (linearTreeResult != null && quadraticTreeResult != null){
+            System.out.println("Linear R-Tree result: " + linearTreeResult.getLabel());
+            System.out.println("Quadratic R-Tree result: " + quadraticTreeResult.getLabel());
+            showMap(featureSource, linearTreeResult, quadraticTreeResult, gb, allFeatures, randomPoint.getLeft());
+        }
+
+    }
+
     public static Pair<Point,String> getRandomPoint(GeometryBuilder gb, ReferencedEnvelope global_bounds, SimpleFeatureCollection allFeatures,String map) {
         Random r = new Random();
         Point p = null;
@@ -157,7 +192,6 @@ public class Main {
         // Evaluation pour Quadratic R-Tree
         calculTime(quadraticTree, nQueries, quadraticOK, testPoints);
 
-        exit(0);
     }
 
     private static void calculTime(RectangleTree Tree, int nQueries, List<Pair<Point, String>> treeLabel, List<Pair<Point, String>> testPoints) {
