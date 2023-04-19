@@ -24,9 +24,13 @@ Pour exécuter le projet, vous devez installer les outils suivants :
 Une fois le programme lancé, voici les étapes qui se déroulent :
 
 1. L'utilisateur choisit une carte parmi trois options : le monde, la Belgique et la France.
-2. Le programme construit deux R-trees : un R-tree linéaire et un R-tree quadratique. Les deux arbres sont construits à l'aide des données du fichier .shp.
-3. L'utilisateur est invité à choisir entre deux options :
-   1. Évaluer les R-trees.
-      - Le programme évalue les deux R-trees en calculant le temps d'exécution de la recherche de points. (Les points recherchés sont tirés au hasard, mais ne sont jamais null.)
-   2. Afficher le résultat de la recherche d'un point sur la carte.
+2. Le programme construit deux R-trees à l'aide des données du fichier .shp:
+      -  ```R-tree linéaire```
+      -  ```R-tree quadratique.```
+   
+3. L'utilisateur est invité à choisir entre deux options : 
+    - Évaluer les R-trees : 
+      - Le programme évalue les deux R-trees en calculant le temps d'exécution de la méthode ```search```.
+      (Les points recherchés sont tirés au hasard et ne sont jamais null)
+    -  Afficher le résultat de la recherche d'un point sur la carte.
 
