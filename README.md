@@ -11,6 +11,10 @@ Pour exécuter le projet, vous devez installer les outils suivants :
 ## Téléchargement et installation
 1. Téléchargez et installez le JDK depuis le site Web d'Oracle (https://www.oracle.com/java/technologies/downloads/).
 2. Téléchargez et installez la dernière version d'IntelliJ IDEA Community ou Ultimate depuis le site Web de JetBrains (https://www.jetbrains.com/idea/download/).
+Ajout des données
+
+## Ajout des données 
+Pour utiliser les données cartographiques, ajoutez le dossier ```data``` contenant les trois cartes fournies dans l'énoncé du projet. Placez ce dossier à l'intérieur du dossier principal ```projet```.
 
 ## Lancement du programme depuis IntelliJ
 1. Ouvrez le projet dans IntelliJ. Si une fenêtre contextuelle ```"Maven build scripts found"``` apparaît, cliquez sur le bouton  
@@ -32,5 +36,4 @@ Une fois le programme lancé, voici les étapes qui se déroulent :
     - Évaluer les R-trees : 
       - Le programme évalue les deux R-trees en calculant le temps d'exécution de la méthode ```search```.
       (Les points recherchés sont tirés au hasard et ne sont jamais null)
-    -  Afficher le résultat de la recherche d'un point sur la carte.
-
+    - Affichez les résultats de la recherche d'un point pour les deux arbres (linéaire et quadratique) sur des cartes distinctes.
