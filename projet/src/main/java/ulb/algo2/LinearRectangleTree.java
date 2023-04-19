@@ -12,96 +12,60 @@ public class LinearRectangleTree extends RectangleTree {
     @Override
     protected int[] pickSeeds(List<Node> subnodes) {
         int[] seeds = new int[2];
+        int[] maxIndices = findIndicesWithMaxDiffs(subnodes);
+
+        seeds[0] = maxIndices[0] > maxIndices[1] ? maxIndices[2] : maxIndices[3];
+        seeds[1] = findIndexWithMinOverlap(subnodes, seeds[0]);
+
+        return seeds;
+    }
+
+    private int[] findIndicesWithMaxDiffs(List<Node> subnodes) {
         double maxDiffX = Double.NEGATIVE_INFINITY;
         double maxDiffY = Double.NEGATIVE_INFINITY;
         int maxIndexX = 0;
         int maxIndexY = 0;
 
         for (int i = 0; i < subnodes.size(); i++) {
-            double minX = subnodes.get(i).getMBR().getMinX();
-            double maxX = subnodes.get(i).getMBR().getMaxX();
-            double minY = subnodes.get(i).getMBR().getMinY();
-            double maxY = subnodes.get(i).getMBR().getMaxY();
-
-            double diffX = maxX - minX;
-            double diffY = maxY - minY;
+            Envelope mbr = subnodes.get(i).getMBR();
+            double diffX = mbr.getWidth();
+            double diffY = mbr.getHeight();
 
             if (diffX > maxDiffX) {
                 maxDiffX = diffX;
                 maxIndexX = i;
             }
-
             if (diffY > maxDiffY) {
                 maxDiffY = diffY;
                 maxIndexY = i;
             }
         }
 
-        int maxIndex;
+        return new int[]{(int) maxDiffX, (int) maxDiffY, maxIndexX, maxIndexY};
+    }
 
-        // Choose the axis with the greatest total difference
-        if (maxDiffX > maxDiffY) {
-            maxIndex = maxIndexX;
-        } else {
-            maxIndex = maxIndexY;
-        }
-
-        seeds[0] = maxIndex;
-
+    private int findIndexWithMinOverlap(List<Node> subnodes, int maxIndex) {
         double minOverlap = Double.MAX_VALUE;
         int minIndex = 0;
 
         for (int i = 0; i < subnodes.size(); i++) {
-            if (i != maxIndex) {
-                Envelope tempMBR = new Envelope(subnodes.get(maxIndex).getMBR());
-                tempMBR.expandToInclude(subnodes.get(i).getMBR());
-                double overlap = tempMBR.getArea() - subnodes.get(maxIndex).getMBR().getArea() - subnodes.get(i).getMBR().getArea();
+            if (i == maxIndex) continue;
 
-                if (overlap < minOverlap) {
-                    minOverlap = overlap;
-                    minIndex = i;
-                }
+            Envelope e1 = subnodes.get(maxIndex).getMBR();
+            Envelope e2 = subnodes.get(i).getMBR();
+            double overlap = calculateWaste(e1, e2);
+
+            if (overlap < minOverlap) {
+                minOverlap = overlap;
+                minIndex = i;
             }
         }
 
-        seeds[1] = minIndex;
-
-        return seeds;
+        return minIndex;
     }
-
-
 
     @Override
-    public int pickNext(List<Node> subNodes, Envelope mbr1, Envelope mbr2, boolean[] assigned) {
-        int nextNodeIndex = -1;
-        // Met maxcostDiff a une valeur negative et tres tres petie pour qu'un noeud soit prit
-        double maxCostDiff = Double.NEGATIVE_INFINITY;
-
-        for (int i = 0; i < subNodes.size(); i++) {
-            if (assigned[i]) {
-                continue;
-            }
-            Envelope currentMBR = subNodes.get(i).getMBR();
-            // Calcul le nouvel air après ajout du MBR
-
-            Envelope mbr1Expanded = new Envelope(mbr1);
-            mbr1Expanded.expandToInclude(currentMBR);
-            double cost1 = mbr1Expanded.getArea() - mbr1.getArea();
-
-            Envelope mbr2Expanded = new Envelope(mbr2);
-            mbr2Expanded.expandToInclude(currentMBR);
-            double cost2 = mbr2Expanded.getArea() - mbr2.getArea();
-
-            // Calcul la diff des air des deux MBR
-            double costDiff = Math.abs(cost1 - cost2);
-
-            if (costDiff > maxCostDiff) {
-                maxCostDiff = costDiff;
-                nextNodeIndex = i;
-            }
-        }
-
-        return nextNodeIndex;
+    protected double calculateCost(Envelope mbr1, Envelope mbr2, Envelope currentMBR) {
+        return Math.abs(calculateExpansionCost(mbr1, currentMBR) - calculateExpansionCost(mbr2, currentMBR));
     }
-
 }

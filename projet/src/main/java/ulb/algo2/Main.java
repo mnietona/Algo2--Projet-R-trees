@@ -89,11 +89,10 @@ public class Main {
         System.out.println("Building R-Trees...");
         LinearRectangleTree linearTree = new LinearRectangleTree(N);
         RectangleTreeBuilder.buildTree(linearTree, allFeatures, map);
-
+        System.out.println("Linear R-Tree built.");
         QuadraticRectangleTree quadraticTree = new QuadraticRectangleTree(N);
         RectangleTreeBuilder.buildTree(quadraticTree, allFeatures, map);
-
-        System.out.println("R-Trees built.\n");
+        System.out.println("Quadratic R-Trees built.\n");
 
         // Get global bounds
         ReferencedEnvelope global_bounds = featureSource.getBounds();

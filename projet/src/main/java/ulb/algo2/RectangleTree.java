@@ -7,19 +7,29 @@ import org.locationtech.jts.geom.Point;
 
 import java.util.List;
 
+/**
+ * Une classe abstraite pour représenter un arbre de rectangles (R-Tree).
+ */
 public abstract class RectangleTree {
     protected int N;
     protected Node root;
 
+    /**
+     * Construit un arbre de rectangles vide.
+     *
+     * @param N Le nombre maximum d'enfants par nœud dans l'arbre.
+     */
     public RectangleTree(int N) {
         this.N = N;
         this.root = new Node();
     }
 
-    private Node getRoot() {
-        return root;
-    }
-
+    /**
+     * Insère un nouvel élément (étiqueté par un SimpleFeature) dans l'arbre de rectangles.
+     *
+     * @param label L'étiquette de l'élément à insérer.
+     * @param feature Le SimpleFeature représentant l'élément à insérer.
+     */
     public void insert(String label, SimpleFeature feature) {
         // Si l'arbre est vide, créez une nouvelle feuille et définissez-la comme racine
         if (root.isEmpty()) {
@@ -55,30 +65,44 @@ public abstract class RectangleTree {
     }
 
     protected Node chooseNode(Node node, SimpleFeature polygon) {
-        Geometry geometry = (Geometry) polygon.getDefaultGeometry();
-        Envelope polygonEnvelope = geometry.getEnvelopeInternal();
+        Envelope polygonEnvelope = getPolygonEnvelope(polygon);
 
-        while (!node.getSubNodes().isEmpty() && !(node.getSubNodes().get(0) instanceof Leaf)) {
-            double minExpansion = Double.MAX_VALUE;
-            Node bestNode = null;
-
-            for (Node subnode : node.getSubNodes()) {
-                Envelope expandedEnvelope = new Envelope(subnode.getMBR());
-                expandedEnvelope.expandToInclude(polygonEnvelope);
-                double expansion = expandedEnvelope.getArea() - subnode.getMBR().getArea();
-
-                if (expansion < minExpansion) {
-                    minExpansion = expansion;
-                    bestNode = subnode;
-                } else if (expansion == minExpansion) {
-                    if (subnode.getMBR().getArea() < bestNode.getMBR().getArea()) {
-                        bestNode = subnode;
-                    }
-                }
-            }
-            node = bestNode;
+        while (!isLeaf(node)) {
+            node = findBestSubNode(node, polygonEnvelope);
         }
         return node;
+    }
+
+    private Envelope getPolygonEnvelope(SimpleFeature polygon) {
+        Geometry geometry = (Geometry) polygon.getDefaultGeometry();
+        return geometry.getEnvelopeInternal();
+    }
+
+    private boolean isLeaf(Node node) {
+        return node.getSubNodes().isEmpty() || node.getSubNodes().get(0) instanceof Leaf;
+    }
+
+    private Node findBestSubNode(Node node, Envelope polygonEnvelope) {
+        double minExpansion = Double.MAX_VALUE;
+        Node bestNode = null;
+
+        for (Node subnode : node.getSubNodes()) {
+            double expansion = calculateExpansionCost(subnode.getMBR(), polygonEnvelope);
+
+            if (expansion < minExpansion) {
+                minExpansion = expansion;
+                bestNode = subnode;
+            } else if (expansion == minExpansion && subnode.getMBR().getArea() < bestNode.getMBR().getArea()) {
+                bestNode = subnode;
+            }
+        }
+        return bestNode;
+    }
+
+    public double calculateExpansionCost(Envelope mbr, Envelope nextMBR) {
+        Envelope expandedMBR = new Envelope(mbr);
+        expandedMBR.expandToInclude(nextMBR);
+        return expandedMBR.getArea() - mbr.getArea();
     }
 
     protected Node addLeaf(Node node, String label, SimpleFeature polygon) {
@@ -166,19 +190,38 @@ public abstract class RectangleTree {
         assigned[next] = true;
     }
 
-    private double calculateExpansionCost(Envelope mbr, Envelope nextMBR) {
-        // Calculez le coût d'expansion de l'ajout d'un nœud à un groupe
-        Envelope expandedMBR = new Envelope(mbr);
-        expandedMBR.expandToInclude(nextMBR);
-        return expandedMBR.getArea() - mbr.getArea();
+    public double calculateWaste(Envelope e1, Envelope e2) {
+        Envelope combinedEnvelope = new Envelope(e1);
+        combinedEnvelope.expandToInclude(e2);
+        return combinedEnvelope.getArea() - e1.getArea() - e2.getArea();
+    }
+    public int pickNext(List<Node> subNodes, Envelope mbr1, Envelope mbr2, boolean[] assigned) {
+        int nextNodeIndex = -1;
+        double maxCost = Double.NEGATIVE_INFINITY;
+
+        for (int i = 0; i < subNodes.size(); i++) {
+            if (assigned[i]) continue;
+
+            Envelope currentMBR = subNodes.get(i).getMBR();
+            double cost = calculateCost(mbr1, mbr2, currentMBR);
+
+            if (cost > maxCost) {
+                maxCost = cost;
+                nextNodeIndex = i;
+            }
+        }
+
+        return nextNodeIndex;
     }
 
-    protected abstract int[] pickSeeds(List<Node> subnodes);
-
-    protected abstract int pickNext(List<Node> subnodes, Envelope mbr1, Envelope mbr2, boolean[] assigned);
-
+    /**
+     * Recherche un élément contenant un point donné dans l'arbre de rectangles.
+     *
+     * @param point Le point a rechéché.
+     * @return La feuille contenant le point, ou null si aucune feuille ne contient le point.
+     */
     public Leaf search(Point point) {
-        return searchHelper(this.getRoot(), point);
+        return searchHelper(this.root, point);
     }
 
     private Leaf searchHelper(Node node, Point point) {
@@ -202,5 +245,9 @@ public abstract class RectangleTree {
         }
         return null;
     }
+
+    protected abstract int[] pickSeeds(List<Node> subnodes);
+
+    protected abstract double calculateCost(Envelope mbr1, Envelope mbr2, Envelope currentMBR);
 
 }

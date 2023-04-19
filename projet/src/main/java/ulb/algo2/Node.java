@@ -36,7 +36,6 @@ public class Node {
         }
     }
 
-
     public void addLeaf(Leaf leaf) {
         addSubNode(leaf);
     }
