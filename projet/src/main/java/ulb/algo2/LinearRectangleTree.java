@@ -12,15 +12,14 @@ public class LinearRectangleTree extends RectangleTree {
     @Override
     protected int[] pickSeeds(List<Node> subnodes) {
         int[] seeds = new int[2];
-        int[] maxIndices = findIndicesWithMaxDiffs(subnodes);
 
-        seeds[0] = maxIndices[0] > maxIndices[1] ? maxIndices[2] : maxIndices[3];
+        seeds[0] = findIndicesWithMaxDiffs(subnodes);
         seeds[1] = findIndexWithMinOverlap(subnodes, seeds[0]);
 
         return seeds;
     }
 
-    private int[] findIndicesWithMaxDiffs(List<Node> subnodes) {
+    private int findIndicesWithMaxDiffs(List<Node> subnodes) {
         double maxDiffX = Double.NEGATIVE_INFINITY;
         double maxDiffY = Double.NEGATIVE_INFINITY;
         int maxIndexX = 0;
@@ -40,8 +39,9 @@ public class LinearRectangleTree extends RectangleTree {
                 maxIndexY = i;
             }
         }
+        int[] maxIndices = new int[]{(int) maxDiffX, (int) maxDiffY, maxIndexX, maxIndexY};
 
-        return new int[]{(int) maxDiffX, (int) maxDiffY, maxIndexX, maxIndexY};
+        return maxIndices[0] > maxIndices[1] ? maxIndices[2] : maxIndices[3];
     }
 
     private int findIndexWithMinOverlap(List<Node> subnodes, int maxIndex) {
