@@ -55,22 +55,22 @@ public class Main {
 
         switch (choice) {
             case 0 -> {
-                filename = "../projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
+                filename = "projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
                 map = "World";
                 System.out.println("the map : " + map);
             }
             case 1 -> {
-                filename = "../projet/data/sh_statbel_statistical_sectors_31370_20220101.shp/sh_statbel_statistical_sectors_31370_20220101.shp";
+                filename = "projet/data/sh_statbel_statistical_sectors_31370_20220101.shp/sh_statbel_statistical_sectors_31370_20220101.shp";
                 map = "Belgium";
                 System.out.println("the map : " + map);
             }
             case 2 -> {
-                filename = "../projet/data/communes-20220101-shp/communes-20220101.shp";
+                filename = "projet/data/communes-20220101-shp/communes-20220101.shp";
                 map = "France";
                 System.out.println("the map : " + map);
             }
             case 3 -> {
-                filename = "../projet/data/TUR_adm/TUR_adm2.shp";
+                filename = "projet/data/TUR_adm/TUR_adm2.shp";
                 map = "Turquie";
                 System.out.println("the map : " + map);
             }
