@@ -11,19 +11,12 @@ public class LinearRectangleTree extends RectangleTree {
 
     @Override
     protected int[] pickSeeds(List<Node> subnodes) {
-        int[] seeds = new int[2];
-
-        seeds[0] = findIndicesWithMaxDiffs(subnodes);
-        seeds[1] = findIndexWithMinOverlap(subnodes, seeds[0]);
-
-        return seeds;
-    }
-
-    private int findIndicesWithMaxDiffs(List<Node> subnodes) {
         double maxDiffX = Double.NEGATIVE_INFINITY;
         double maxDiffY = Double.NEGATIVE_INFINITY;
-        int maxIndexX = 0;
-        int maxIndexY = 0;
+        int maxIndexX1 = 0;
+        int maxIndexX2 = 0;
+        int maxIndexY1 = 0;
+        int maxIndexY2 = 0;
 
         for (int i = 0; i < subnodes.size(); i++) {
             Envelope mbr = subnodes.get(i).getMBR();
@@ -32,36 +25,17 @@ public class LinearRectangleTree extends RectangleTree {
 
             if (diffX > maxDiffX) {
                 maxDiffX = diffX;
-                maxIndexX = i;
+                maxIndexX1 = i;
+                maxIndexX2 = (i + 1) % subnodes.size();
             }
             if (diffY > maxDiffY) {
                 maxDiffY = diffY;
-                maxIndexY = i;
-            }
-        }
-        int[] maxIndices = new int[]{(int) maxDiffX, (int) maxDiffY, maxIndexX, maxIndexY};
-
-        return maxIndices[0] > maxIndices[1] ? maxIndices[2] : maxIndices[3];
-    }
-
-    private int findIndexWithMinOverlap(List<Node> subnodes, int maxIndex) {
-        double minOverlap = Double.MAX_VALUE;
-        int minIndex = 0;
-
-        for (int i = 0; i < subnodes.size(); i++) {
-            if (i == maxIndex) continue;
-
-            Envelope e1 = subnodes.get(maxIndex).getMBR();
-            Envelope e2 = subnodes.get(i).getMBR();
-            double overlap = calculateWaste(e1, e2);
-
-            if (overlap < minOverlap) {
-                minOverlap = overlap;
-                minIndex = i;
+                maxIndexY1 = i;
+                maxIndexY2 = (i + 1) % subnodes.size();
             }
         }
 
-        return minIndex;
+        return maxDiffX > maxDiffY ? new int[]{maxIndexX1, maxIndexX2} : new int[]{maxIndexY1, maxIndexY2};
     }
 
     @Override
