@@ -33,7 +33,7 @@ Une fois le programme lancé, voici les étapes qui se déroulent :
       -  ```R-tree quadratique.```
    
 3. L'utilisateur est invité à choisir entre deux options : 
-    - Évaluer les R-trees : 
+    - Évaluer les R-trees sur des points aléatoires : 
       - Le programme évalue les deux R-trees en calculant le temps d'exécution de la méthode ```search```.
       (Les points recherchés sont tirés au hasard et ne sont jamais null)
     - Affichez les résultats de la recherche d'un point pour les deux arbres (linéaire et quadratique) sur des cartes distinctes.
