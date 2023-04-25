@@ -109,16 +109,9 @@ public abstract class RectangleTree {
         // Ajoutez la nouvelle feuille au nœud choisi et mettez à jour le MBR
         Geometry geometry = (Geometry) polygon.getDefaultGeometry();
         Envelope polygonEnvelope = geometry.getEnvelopeInternal();
-        // Si le nœud est une feuille, créez un nouveau nœud et ajoutez les deux feuilles
-        if (node.getSubNodes().isEmpty() || node.getSubNodes().get(0) instanceof Leaf) {
-            node.addSubNode(new Leaf(label, polygon));
-        } else { // Sinon, ajoutez la nouvelle feuille au nœud choisit
-            Node selectedNode = chooseNode(node, polygon);
-            Node newNode = addLeaf(selectedNode, label, polygon);
-            if (newNode != null) {
-                node.addSubNode(newNode);
-            }
-        }
+
+        // Ajoutez la nouvelle feuille au nœud choisi
+        node.addSubNode(new Leaf(label, polygon));
         node.expandEnvelope(polygonEnvelope); // Mettez à jour le MBR du nœud actuel
 
         // Si le nœud choisi est plein, divisez-le
@@ -128,6 +121,7 @@ public abstract class RectangleTree {
             return null;
         }
     }
+
 
     protected Node split(Node node) {
         // Trouvez les deux groupes de nœuds les plus éloignés
