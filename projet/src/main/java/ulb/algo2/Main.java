@@ -101,7 +101,7 @@ public class Main {
         GeometryBuilder gb = new GeometryBuilder();
 
         System.out.println("Choisissez une action:");
-        System.out.println("0: Evaluer les R-Trees sur des points aléatoires");
+        System.out.println("0: Évaluer les R-Trees sur des points aléatoires");
         System.out.println("1: Afficher le résultat d'un point aléatoire");
         choice = scanner.nextInt();
         if (choice == 0) {
@@ -109,7 +109,6 @@ public class Main {
         }else if (choice == 1) {
             mapResult(map, featureSource, allFeatures, linearTree, quadraticTree, global_bounds, gb);
         }
-        exit(0);
 
     }
 
@@ -146,6 +145,7 @@ public class Main {
 
             p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
                     r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
+
             try ( SimpleFeatureIterator iterator = allFeatures.features() ){
                 while( iterator.hasNext()){
                     SimpleFeature feature = iterator.next();
