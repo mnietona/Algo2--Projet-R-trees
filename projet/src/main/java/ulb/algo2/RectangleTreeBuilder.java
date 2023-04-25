@@ -10,11 +10,11 @@ public class RectangleTreeBuilder {
             while (iterator.hasNext()) {
                 SimpleFeature feature = iterator.next();
                 switch (map) {
-                    case "Belgium" -> {
+                    case "Belgique" -> {
                         String label = feature.getProperty("T_SEC_FR").getValue().toString();
                         rectangleTree.insert(label, feature);
                     }
-                    case "World" -> {
+                    case "Monde" -> {
                         String label2 = feature.getProperty("NAME_FR").getValue().toString();
                         rectangleTree.insert(label2, feature);
 

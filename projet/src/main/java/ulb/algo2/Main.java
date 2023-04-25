@@ -42,9 +42,9 @@ public class Main {
 
         // input choice
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Choose a map:");
-        System.out.println("0: World");
-        System.out.println("1: Belgium");
+        System.out.println("Quelle carte voulez-vous ?");
+        System.out.println("0: Monde");
+        System.out.println("1: Belgique");
         System.out.println("2: France");
         System.out.println("3: Turquie");
         int choice = scanner.nextInt();
@@ -56,32 +56,26 @@ public class Main {
         switch (choice) {
             case 0 -> {
                 filename = "projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
-                map = "World";
-                System.out.println("the map : " + map);
+                map = "Monde";
+
             }
             case 1 -> {
                 filename = "projet/data/sh_statbel_statistical_sectors_31370_20220101.shp/sh_statbel_statistical_sectors_31370_20220101.shp";
-                map = "Belgium";
-                System.out.println("the map : " + map);
+                map = "Belgique";
             }
             case 2 -> {
                 filename = "projet/data/communes-20220101-shp/communes-20220101.shp";
                 map = "France";
-                System.out.println("the map : " + map);
             }
             case 3 -> {
                 filename = "projet/data/TUR_adm/TUR_adm2.shp";
                 map = "Turquie";
-                System.out.println("the map : " + map);
-            }
-            default -> {
-                System.out.println("Wrong choice");
-                exit(0);
             }
         }
+        System.out.println("Votre choix : " + map);
 
         File file = new File(filename);
-        if (!file.exists()) throw new RuntimeException("Shapefile does not exist.");
+        if (!file.exists()) throw new RuntimeException("Le fichier n'existe pas.");
 
         FileDataStore store = FileDataStoreFinder.getDataStore(file);
         SimpleFeatureSource featureSource = store.getFeatureSource();
@@ -90,56 +84,53 @@ public class Main {
 
 
         // Build R-Trees
-        System.out.println("Building R-Trees...");
+        System.out.println("Construction des R-Trees...");
         long startTime = System.nanoTime();
         LinearRectangleTree linearTree = new LinearRectangleTree(N);
         RectangleTreeBuilder.buildTree(linearTree, allFeatures, map);
         long endTime = System.nanoTime();
-        System.out.println("Linear R-Tree built in " + TimeUnit.NANOSECONDS.toMillis(endTime - startTime) + " ms.");
+        System.out.println("R-Tree linéaire construit en " + TimeUnit.NANOSECONDS.toMillis(endTime - startTime) + " ms.");
 
         QuadraticRectangleTree quadraticTree = new QuadraticRectangleTree(N);
         RectangleTreeBuilder.buildTree(quadraticTree, allFeatures, map);
         endTime = System.nanoTime();
-        System.out.println("Quadratic R-Trees built in " + TimeUnit.NANOSECONDS.toMillis(endTime - startTime) + " ms.\n");
+        System.out.println("R-Tree quadratique construit en  " + TimeUnit.NANOSECONDS.toMillis(endTime - startTime) + " ms.\n");
 
         // Get global bounds
         ReferencedEnvelope global_bounds = featureSource.getBounds();
         GeometryBuilder gb = new GeometryBuilder();
 
-        System.out.println("Choose an option:");
-        System.out.println("0: Evaluate the R-Trees");
-        System.out.println("1: Display the R-Trees");
+        System.out.println("Choisissez une action:");
+        System.out.println("0: Evaluer les R-Trees sur des points aléatoires");
+        System.out.println("1: Afficher le résultat d'un point aléatoire");
         choice = scanner.nextInt();
         if (choice == 0) {
             evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb,map);
         }else if (choice == 1) {
             mapResult(map, featureSource, allFeatures, linearTree, quadraticTree, global_bounds, gb);
-        }else{
-            System.out.println("Wrong choice");
-            exit(0);
         }
+        exit(0);
 
     }
 
     private static void mapResult(String map, SimpleFeatureSource featureSource, SimpleFeatureCollection allFeatures, LinearRectangleTree linearTree, QuadraticRectangleTree quadraticTree, ReferencedEnvelope global_bounds, GeometryBuilder gb) {
         Pair<Point, String> randomPoint = getRandomPoint(gb, global_bounds, allFeatures, map);
+        System.out.println("Point : " + randomPoint.getLeft().toString() + " Nom du point : " + randomPoint.getRight());
         Leaf linearTreeResult = linearTree.search(randomPoint.getLeft());
         Leaf quadraticTreeResult = quadraticTree.search(randomPoint.getLeft());
-        System.out.println("Random point: " + randomPoint.getLeft().toString());
-        System.out.println("Label of the random point: " + randomPoint.getRight());
 
         if (linearTreeResult != null) {
-            System.out.println("Linear R-Tree result: " + linearTreeResult.getLabel());
+            System.out.println("Résultat du R-Tree linéaire : " + linearTreeResult.getLabel());
             showMapForTree(featureSource, linearTreeResult, gb, allFeatures, randomPoint.getLeft(), Color.red, 2.0f, "Linear R-Tree");
         }else {
-            System.out.println("Linear R-Tree result: null");
+            System.out.println("Résultat du R-Tree linéaire est null");
         }
 
         if (quadraticTreeResult != null) {
-            System.out.println("Quadratic R-Tree result: " + quadraticTreeResult.getLabel());
+            System.out.println("Résultat du R-Tree quadratique : " + quadraticTreeResult.getLabel());
             showMapForTree(featureSource, quadraticTreeResult, gb, allFeatures, randomPoint.getLeft(), Color.blue, 4.0f, "Quadratic R-Tree");
         }else {
-            System.out.println("Quadratic R-Tree result: null");
+            System.out.println("Résultat du R-Tree quadratique est null");
         }
 
 
@@ -168,8 +159,8 @@ public class Main {
                 }
                 if (target != null) {
                     switch (map) {
-                        case "Belgium" -> label = target.getProperty("T_SEC_FR").getValue().toString();
-                        case "World" -> label = target.getProperty("NAME_FR").getValue().toString();
+                        case "Belgique" -> label = target.getProperty("T_SEC_FR").getValue().toString();
+                        case "Monde" -> label = target.getProperty("NAME_FR").getValue().toString();
                         case "France" -> label = target.getProperty("nom").getValue().toString();
                         case "Turquie" -> label = target.getProperty("NAME_2").getValue().toString();
                     }
@@ -187,7 +178,7 @@ public class Main {
         List <Pair<Point,String>> linearOK = new ArrayList<>();
         List <Pair<Point,String>> quadraticOK = new ArrayList<>();
 
-        System.out.println("Generating "+ nQueries +" random points...");
+        System.out.println("Génération de " + nQueries + " points aléatoires...");
 
         // Génère des points aléatoires
         List<Pair<Point,String>> testPoints = new ArrayList<>();
@@ -195,7 +186,7 @@ public class Main {
             Pair<Point ,String> result  = getRandomPoint(gb, global_bounds, allFeatures, map);
             testPoints.add(result);
         }
-        System.out.println("Random points generated.\n");
+        System.out.println("Points aléatoires générés.\n");
 
         // Evaluation pour Linear R-Tree
         calculTime(linearTree, nQueries, linearOK, testPoints);
@@ -210,9 +201,9 @@ public class Main {
         long elapsedTime;
         startTime = System.nanoTime();
         if (Tree instanceof LinearRectangleTree)
-            System.out.println("Search Linear R-Tree:");
+            System.out.println("Recherche R-Tree linéaire:");
         else
-            System.out.println("Search Quadratic R-Tree:");
+            System.out.println("Recherche R-Tree quadratique:");
 
         for (Pair<Point, String> pair : testPoints) {
             Leaf result = Tree.search(pair.getLeft());
@@ -221,21 +212,20 @@ public class Main {
                     treeLabel.add(pair);
                 }
                 else {
-                    System.out.println("Wrong result for point " + pair.getLeft());
+                    System.out.println("Erreur de résultat pour le point : " + pair.getLeft().toString());
                 }
             }
 
         }
         elapsedTime = System.nanoTime() - startTime;
-        System.out.println("Time elapsed: " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
-        System.out.println("Results found: " + treeLabel.size() + " sur " + nQueries+"\n");
+        System.out.println("Temps d'exécution : " + TimeUnit.NANOSECONDS.toMillis(elapsedTime) + " ms");
+        System.out.println("Résultats corrects : " + treeLabel.size() + "/" + nQueries + "\n");
     }
 
 
     public static void showMapForTree(SimpleFeatureSource featureSource, Leaf treeResult,
                                       GeometryBuilder gb, SimpleFeatureCollection allFeatures, Point p,
                                       Color treeColor, float treeStrokeWidth, String treeTitle) {
-        // Display Map
         MapContent map = new MapContent();
         map.setTitle(treeTitle);
 
@@ -248,7 +238,6 @@ public class Main {
 
         SimpleFeature tree = treeResult.getPolygon();
 
-        // Add tree result MBR
         featureBuilder.add(gb.box(tree.getBounds().getMinX(),
                 tree.getBounds().getMinY(),
                 tree.getBounds().getMaxX(),
@@ -256,18 +245,15 @@ public class Main {
         ));
         collection.add(featureBuilder.buildFeature(null));
 
-        // Add search point (uncomment and customize if needed)
         Polygon c = gb.circle(p.getX(), p.getY(), allFeatures.getBounds().getWidth() / 200, 10);
         featureBuilder.add(c);
         collection.add(featureBuilder.buildFeature(null));
 
-        // couleur pour l'arbre
         Style treeStyle = SLD.createLineStyle(treeColor, treeStrokeWidth);
 
         Layer treeLayer = new FeatureLayer(collection, treeStyle);
         map.addLayer(treeLayer);
 
-        // Now display the map
         JMapFrame.showMap(map);
 
     }
