@@ -7,19 +7,18 @@ import java.util.List;
 public class Node {
     protected Envelope mbr;
     protected List<Node> subNodes;
-
     protected Node parent;
 
     public Node() {
         this.mbr = new Envelope();
         this.subNodes = new ArrayList<>();
     }
+
     public void addSubNode(Node node) {
         subNodes.add(node);
         mbr.expandToInclude(node.getMBR());
-        node.setParent(this); // Ajoutez cette ligne pour définir le parent
+        node.setParent(this);
     }
-
 
     public Node getParent() {
         return this.parent;
