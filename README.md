@@ -14,7 +14,7 @@ Pour exécuter le projet, vous devez installer les outils suivants :
 
 ## Ajout des données 
 Pour utiliser les données cartographiques, ajoutez le dossier ```data``` contenant les trois cartes fournies dans l'énoncé du projet. Placez ce dossier à l'intérieur du dossier principal ```projet```.  
-Pour la quatrième carte, téléchargez le dossier ```turkey``` à partir de ce lien https://www.diva-gis.org/datadown
+Pour la quatrième carte, téléchargez le dossier ```turkey``` à partir de ce lien https://www.diva-gis.org/datadown et placez le dossier dans ```data```.
 
 ## Lancement du programme depuis IntelliJ
 1. Ouvrez le projet dans IntelliJ. Si une fenêtre contextuelle ```"Maven build scripts found"``` apparaît, cliquez sur le bouton  
@@ -27,7 +27,7 @@ Pour la quatrième carte, téléchargez le dossier ```turkey``` à partir de ce 
 ## Fonctionnement du programme
 Une fois le programme lancé, voici les étapes qui se déroulent :
 
-1. L'utilisateur choisit une carte parmi trois options : le monde, la Belgique et la France.
+1. L'utilisateur choisit une carte parmi quatres options : le monde, la Belgique, la France et la Turquie .
 2. Le programme construit deux R-trees à l'aide des données du fichier .shp:
       -  ```R-tree linéaire```
       -  ```R-tree quadratique.```
