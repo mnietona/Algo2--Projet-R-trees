@@ -36,7 +36,7 @@ public class Main {
 
         // input choice
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Quelle carte voulez-vous ?");
+        System.out.println("Quell e carte voulez-vous ?");
         System.out.println("0: Monde");
         System.out.println("1: Belgique");
         System.out.println("2: France");
@@ -45,7 +45,7 @@ public class Main {
 
         String filename = "";
         String map = "";
-        int N = 10;
+        int N = 100;
 
         switch (choice) {
             case 0 -> {
@@ -104,7 +104,6 @@ public class Main {
         }else if (choice == 1) {
             mapResult(map, featureSource, allFeatures, linearTree, quadraticTree, global_bounds, gb);
         }
-
     }
 
     private static void mapResult(String map, SimpleFeatureSource featureSource, SimpleFeatureCollection allFeatures, LinearRectangleTree linearTree, QuadraticRectangleTree quadraticTree, ReferencedEnvelope global_bounds, GeometryBuilder gb) {
@@ -126,8 +125,6 @@ public class Main {
         }else {
             System.out.println("Résultat du R-Tree quadratique est null");
         }
-
-
     }
 
     public static Pair<Point,String> getRandomPoint(GeometryBuilder gb, ReferencedEnvelope global_bounds, SimpleFeatureCollection allFeatures,String map) {
@@ -139,13 +136,16 @@ public class Main {
         while (target == null) {
 
             if (Objects.equals(map, "France")){
-                int random = r.nextInt(2);
-                if (random == 1){ // Donne un point sur le "Pays"
-                    p = gb.point(r.nextInt(-7,10),
-                            r.nextInt(40,52));
+                int random = r.nextInt(3);
+                if (random == 1) { // Donne un point sur l'ile sud-est de la France
+                    p = gb.point(r.nextDouble(8.52, 9.57),
+                            r.nextDouble(41.32, 43.04));
+                }else if (random == 2){ // Donne un point sur la France
+                        p = gb.point(r.nextDouble(-5.13,8.24),
+                                r.nextDouble(42.33,51.10));
                 }else { // Donne un point sur les "iles"
-                    p = gb.point(r.nextInt(-55,-51),
-                            r.nextInt(2,6));
+                    p = gb.point(r.nextDouble(-54.62,-51.62),
+                            r.nextDouble(2.10,5.79));
                 }
 
             }else {
