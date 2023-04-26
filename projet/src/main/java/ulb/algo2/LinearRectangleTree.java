@@ -40,6 +40,8 @@ public class LinearRectangleTree extends RectangleTree {
 
     @Override
     protected double calculateCost(Envelope mbr1, Envelope mbr2, Envelope currentMBR) {
-        return Math.abs(calculateExpansionCost(mbr1, currentMBR) - calculateExpansionCost(mbr2, currentMBR));
+        double cost1 = calculateExpansionCost(mbr1, currentMBR);
+        double cost2 = calculateExpansionCost(mbr2, currentMBR);
+        return Math.abs(cost1 - cost2);
     }
 }

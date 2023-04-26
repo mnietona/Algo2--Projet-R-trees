@@ -21,19 +21,13 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
 
 import org.geotools.swing.JMapFrame;
 
-import static java.lang.System.exit;
-
-
-import java.util.List;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.opengis.feature.simple.SimpleFeature;
 
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 
@@ -86,6 +80,7 @@ public class Main {
         // Build R-Trees
         System.out.println("Construction des R-Trees...");
         long startTime = System.nanoTime();
+
         LinearRectangleTree linearTree = new LinearRectangleTree(N);
         RectangleTreeBuilder.buildTree(linearTree, allFeatures, map);
         long endTime = System.nanoTime();
@@ -143,8 +138,20 @@ public class Main {
 
         while (target == null) {
 
-            p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
-                    r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
+            if (Objects.equals(map, "France")){
+                int random = r.nextInt(2);
+                if (random == 1){ // Donne un point sur le "Pays"
+                    p = gb.point(r.nextInt(-7,10),
+                            r.nextInt(40,52));
+                }else { // Donne un point sur les "iles"
+                    p = gb.point(r.nextInt(-55,-51),
+                            r.nextInt(2,6));
+                }
+
+            }else {
+                p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
+                        r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
+            }
 
             try ( SimpleFeatureIterator iterator = allFeatures.features() ){
                 while( iterator.hasNext()){
