@@ -36,7 +36,7 @@ public class Main {
 
         // input choice
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Quell e carte voulez-vous ?");
+        System.out.println("Quelle carte voulez-vous ?");
         System.out.println("0: Monde");
         System.out.println("1: Belgique");
         System.out.println("2: France");
@@ -45,7 +45,7 @@ public class Main {
 
         String filename = "";
         String map = "";
-        int N = 100;
+        int N = 10;
 
         switch (choice) {
             case 0 -> {
@@ -137,17 +137,19 @@ public class Main {
 
             if (Objects.equals(map, "France")){
                 int random = r.nextInt(3);
-                if (random == 1) { // Donne un point sur l'ile sud-est de la France
+
+                if (random == 0) { // Donne un point sur l'ile sud-est de la France
                     p = gb.point(r.nextDouble(8.52, 9.57),
                             r.nextDouble(41.32, 43.04));
-                }else if (random == 2){ // Donne un point sur la France
+                }
+                else if (random == 1){ // Donne un point sur la France
                         p = gb.point(r.nextDouble(-5.13,8.24),
                                 r.nextDouble(42.33,51.10));
-                }else { // Donne un point sur les "iles"
+                }
+                else { // Donne un point sur les "iles"
                     p = gb.point(r.nextDouble(-54.62,-51.62),
                             r.nextDouble(2.10,5.79));
                 }
-
             }else {
                 p = gb.point(r.nextInt((int) global_bounds.getMinX(), (int) global_bounds.getMaxX()),
                         r.nextInt((int) global_bounds.getMinY(), (int) global_bounds.getMaxY()));
