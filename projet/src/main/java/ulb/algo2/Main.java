@@ -51,7 +51,6 @@ public class Main {
             case 0 -> {
                 filename = "projet/data/WB_countries_Admin0_10m/WB_countries_Admin0_10m.shp";
                 map = "Monde";
-
             }
             case 1 -> {
                 filename = "projet/data/sh_statbel_statistical_sectors_31370_20220101.shp/sh_statbel_statistical_sectors_31370_20220101.shp";
