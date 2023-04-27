@@ -16,7 +16,6 @@ import org.geotools.styling.SLD;
 import org.geotools.styling.Style;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -246,6 +245,7 @@ public class Main {
 
         SimpleFeature tree = treeResult.getPolygon();
 
+        // Affiche le MBR du résultat
         featureBuilder.add(gb.box(tree.getBounds().getMinX(),
                 tree.getBounds().getMinY(),
                 tree.getBounds().getMaxX(),
@@ -253,9 +253,8 @@ public class Main {
         ));
         collection.add(featureBuilder.buildFeature(null));
 
-        Polygon c = gb.circle(p.getX(), p.getY(), allFeatures.getBounds().getWidth() / 200, 10);
-        featureBuilder.add(c);
-        collection.add(featureBuilder.buildFeature(null));
+        // Affiche le point recherché
+        collection.add(tree);
 
         Style treeStyle = SLD.createLineStyle(treeColor, treeStrokeWidth);
 

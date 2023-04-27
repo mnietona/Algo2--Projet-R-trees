@@ -12,6 +12,7 @@ public class Leaf extends Node {
         super();
         this.label = label;
         this.polygon = polygon;
+        // Obtenir le MBR du polygone
         Geometry geometry = (Geometry) polygon.getDefaultGeometry();
         this.mbr = geometry.getEnvelopeInternal();
     }

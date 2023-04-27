@@ -20,6 +20,7 @@ public class QuadraticRectangleTree extends RectangleTree {
             Envelope e1 = subnodes.get(i).getMBR();
             for (int j = i + 1; j < size; j++) {
                 double waste = calculateWaste(e1, subnodes.get(j).getMBR());
+                // Si le gaspillage est plus grand que le gaspillage maximum, on le remplace
                 if (waste > maxWaste) {
                     maxWaste = waste;
                     seeds[0] = i;
@@ -34,6 +35,7 @@ public class QuadraticRectangleTree extends RectangleTree {
     protected double calculateCost(Envelope mbr1, Envelope mbr2, Envelope currentMBR) {
         double cost1 = calculateExpansionCost(mbr1, currentMBR);
         double cost2 = calculateExpansionCost(mbr2, currentMBR);
+        // On retourne le carré de la somme des coûts
         return cost1 * cost1 + cost2 * cost2;
     }
 

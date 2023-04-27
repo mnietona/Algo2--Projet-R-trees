@@ -32,18 +32,26 @@ public abstract class RectangleTree {
         }
     }
 
+    /**
+     * Met à jour l'arbre R-Tree après l'insertion d'un nouveau nœud
+     *
+     * @param node Le nœud à partir duquel effectuer la mise à jour
+     * @param newNode Le nouveau nœud inséré
+     */
     private void adjustTree(Node node, Node newNode) {
         node.updateMBR();
 
         if (node.getParent() != null) {
             adjustTree(node.getParent(), newNode);
-        } else if (newNode != null) {
+        }
+        else if (newNode != null) {
             Node newRoot = new Node();
             newRoot.addSubNode(node);
             newRoot.addSubNode(newNode);
             root = newRoot;
         }
     }
+
 
     protected Node chooseNode(Node node, SimpleFeature polygon) {
         Envelope polygonEnvelope = getPolygonEnvelope(polygon);
@@ -63,31 +71,43 @@ public abstract class RectangleTree {
         return node.getSubNodes().isEmpty() || node.getSubNodes().get(0) instanceof Leaf;
     }
 
+    /**
+     * Recherche le meilleur sous-nœud à partir du nœud donné pour insérer un nouveau polygon
+     *
+     * @param node Le nœud à partir duquel effectuer la recherche
+     * @param polygonEnvelope L'enveloppe du nouveau polygon à insérer
+     * @return Le meilleur sous-nœud pour insérer le nouveau polygon
+     */
     private Node findBestSubNode(Node node, Envelope polygonEnvelope) {
         double minExpansion = Double.MAX_VALUE;
         Node bestNode = null;
 
+
         for (Node subnode : node.getSubNodes()) {
             double expansion = calculateExpansionCost(subnode.getMBR(), polygonEnvelope);
 
+            // Si l'expansion est plus petite, on met à jour le meilleur sous-nœud
             if (expansion < minExpansion) {
                 minExpansion = expansion;
                 bestNode = subnode;
-            } else if (expansion == minExpansion && subnode.getMBR().getArea() < bestNode.getMBR().getArea()) {
+            }
+            // Si deux sous-nœuds ont la même expansion, on prend celui avec la plus petite surface
+            else if (expansion == minExpansion && subnode.getMBR().getArea() < bestNode.getMBR().getArea()) {
                 bestNode = subnode;
             }
         }
         return bestNode;
     }
 
+
     public double calculateExpansionCost(Envelope mbr, Envelope nextMBR) {
+        // On calcule l'expansion de l'enveloppe en ajoutant le nouveau polygon
         Envelope expandedMBR = new Envelope(mbr);
         expandedMBR.expandToInclude(nextMBR);
         return expandedMBR.getArea() - mbr.getArea();
     }
 
     protected Node addLeaf(Node node, String label, SimpleFeature polygon) {
-
         node.addSubNode(new Leaf(label, polygon));
 
         Geometry geometry = (Geometry) polygon.getDefaultGeometry();
@@ -102,10 +122,12 @@ public abstract class RectangleTree {
     }
 
     protected Node split(Node node) {
+
+        // On choisit les deux sous-nœuds les plus éloignés en fonction de l'heuristique
         int[] seeds = pickSeeds(node.getSubNodes());
-        Node[] newGroups = createAndInitNewGroups(node, seeds);
-        Node newGroup1 = newGroups[0];
-        Node newGroup2 = newGroups[1];
+        Node[] newGroup = createNewGroup(node, seeds);
+        Node newGroup1 = newGroup[0];
+        Node newGroup2 = newGroup[1];
 
         boolean[] assigned = initAssignedArray(node, seeds);
         int remaining = node.getSubNodes().size() - 2;
@@ -118,7 +140,8 @@ public abstract class RectangleTree {
         return newGroup2;
     }
 
-    private Node[] createAndInitNewGroups(Node node, int[] seeds) {
+    private Node[] createNewGroup(Node node, int[] seeds) {
+        // On crée deux nouveaux groupes et on y ajoute les deux sous-nœuds les plus éloignés
         Node newGroup1 = new Node();
         Node newGroup2 = new Node();
         newGroup1.addSubNode(node.getSubNodes().get(seeds[0]));
@@ -137,16 +160,16 @@ public abstract class RectangleTree {
         Envelope mbr1 = newGroup1.getMBR();
         Envelope mbr2 = newGroup2.getMBR();
 
-        int next = pickNext(node.getSubNodes(), mbr1, mbr2, assigned);
+        int next = pickNext(node.getSubNodes(), mbr1, mbr2, assigned); // On choisit le sous-nœud le plus éloigné
         Envelope nextMBR = node.getSubNodes().get(next).getMBR();
 
         double cost1 = calculateExpansionCost(mbr1, nextMBR);
         double cost2 = calculateExpansionCost(mbr2, nextMBR);
 
-        if (cost1 < cost2) {
+        if (cost1 < cost2) { // Si le coût d'expansion est plus petit pour le premier groupe, on l'ajoute
             newGroup1.addSubNode(node.getSubNodes().get(next));
             mbr1.expandToInclude(nextMBR);
-        } else {
+        } else { // Sinon, on l'ajoute au deuxième groupe
             newGroup2.addSubNode(node.getSubNodes().get(next));
             mbr2.expandToInclude(nextMBR);
         }
@@ -154,6 +177,7 @@ public abstract class RectangleTree {
     }
 
     public double calculateWaste(Envelope e1, Envelope e2) {
+        // On calcule le gaspillage en combinant les deux enveloppes
         Envelope combinedEnvelope = new Envelope(e1);
         combinedEnvelope.expandToInclude(e2);
         return combinedEnvelope.getArea() - e1.getArea() - e2.getArea();
@@ -167,9 +191,10 @@ public abstract class RectangleTree {
             if (assigned[i]) continue;
 
             Envelope currentMBR = subNodes.get(i).getMBR();
+            // on calcule le coût en fonction de l'heuristique
             double cost = calculateCost(mbr1, mbr2, currentMBR);
 
-            if (cost > maxCost) {
+            if (cost > maxCost) { // Si le coût est plus grand, on met à jour le coût et l'index
                 maxCost = cost;
                 nextNodeIndex = i;
             }
