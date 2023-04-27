@@ -3,6 +3,9 @@ import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.opengis.feature.simple.SimpleFeature;
 
+/**
+ * Classe permettant de construire un RectangleTree.
+ */
 public class RectangleTreeBuilder {
 
     public static void buildTree(RectangleTree rectangleTree, SimpleFeatureCollection featureCollection, String map) {

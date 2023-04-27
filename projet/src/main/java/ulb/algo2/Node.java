@@ -4,6 +4,9 @@ import org.locationtech.jts.geom.Envelope;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Classe représentant un nœud de l'arbre R-Tree.
+ */
 public class Node {
     protected Envelope mbr;
     protected List<Node> subNodes;
@@ -14,6 +17,10 @@ public class Node {
         this.subNodes = new ArrayList<>();
     }
 
+    /**
+     * Ajoute un nœud fils au nœud courant.
+     * @param node le nœud à ajouter
+     */
     public void addSubNode(Node node) {
         subNodes.add(node);
         mbr.expandToInclude(node.getMBR());
@@ -28,6 +35,9 @@ public class Node {
         this.parent = parent;
     }
 
+    /**
+     * Met à jour le MBR du nœud courant en fonction des MBR de ses nœuds fils.
+     */
     public void updateMBR() {
         this.mbr = new Envelope();
         for (Node subNode : subNodes) {
@@ -35,6 +45,10 @@ public class Node {
         }
     }
 
+    /**
+     * Ajoute une feuille au nœud courant.
+     * @param leaf la feuille à ajouter
+     */
     public void addLeaf(Leaf leaf) {
         addSubNode(leaf);
     }
@@ -43,6 +57,10 @@ public class Node {
         return subNodes.isEmpty();
     }
 
+    /**
+     * Étend le MBR du nœud courant pour inclure le MBR passé en paramètre.
+     * @param envelope le MBR à inclure
+     */
     public void expandEnvelope(Envelope envelope) {
         this.mbr.expandToInclude(envelope);
     }

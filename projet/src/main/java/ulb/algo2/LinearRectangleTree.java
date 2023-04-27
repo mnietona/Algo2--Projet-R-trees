@@ -4,6 +4,11 @@ import org.locationtech.jts.geom.Envelope;
 
 import java.util.List;
 
+/**
+ * Classe représentant un LinearRectangleTree.
+ * Cette classe hérite de la classe RectangleTree.
+ * Elle implémente les méthodes pickSeeds et calculateCost.
+ */
 public class LinearRectangleTree extends RectangleTree {
     public LinearRectangleTree(int N) {
         super(N);
@@ -36,7 +41,6 @@ public class LinearRectangleTree extends RectangleTree {
                 indexY2 = (i + 1) % subnodes.size();
             }
         }
-
         return maxDiffX > maxDiffY ? new int[]{indexX1, indexX2} : new int[]{indexY1, indexY2};
     }
 

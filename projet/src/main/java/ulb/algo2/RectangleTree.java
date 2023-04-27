@@ -7,17 +7,23 @@ import org.locationtech.jts.geom.Point;
 
 import java.util.List;
 
-
+/**
+ * Classe abstraite représentant un arbre R-Tree
+ */
 public abstract class RectangleTree {
     protected int N;
     protected Node root;
-
 
     public RectangleTree(int N) {
         this.N = N;
         this.root = new Node();
     }
 
+    /**
+     * Insère un nouveau polygon dans l'arbre R-Tree
+     * @param label Le label du polygon
+     * @param feature Le polygon à insérer
+     */
     public void insert(String label, SimpleFeature feature) {
         if (root.isEmpty()) {
             Leaf newLeaf = new Leaf(label, feature);
@@ -52,6 +58,12 @@ public abstract class RectangleTree {
         }
     }
 
+    /**
+     * Recherche le meilleur nœud pour insérer un nouveau polygon
+     * @param node Le nœud à partir duquel effectuer la recherche
+     * @param polygon Le polygon à insérer
+     * @return Le meilleur nœud pour insérer le nouveau polygon
+     */
 
     protected Node chooseNode(Node node, SimpleFeature polygon) {
         Envelope polygonEnvelope = getPolygonEnvelope(polygon);
@@ -62,6 +74,10 @@ public abstract class RectangleTree {
         return node;
     }
 
+    /**
+     * Retourne l'enveloppe du polygon
+     *
+     */
     private Envelope getPolygonEnvelope(SimpleFeature polygon) {
         Geometry geometry = (Geometry) polygon.getDefaultGeometry();
         return geometry.getEnvelopeInternal();
@@ -99,7 +115,12 @@ public abstract class RectangleTree {
         return bestNode;
     }
 
-
+    /**
+     * Calcule le coût d'expansion de l'enveloppe en ajoutant le nouveau polygon
+     * @param mbr L'enveloppe du nœud
+     * @param nextMBR L'enveloppe du nouveau polygon
+     * @return Le coût d'expansion
+     */
     public double calculateExpansionCost(Envelope mbr, Envelope nextMBR) {
         // On calcule l'expansion de l'enveloppe en ajoutant le nouveau polygon
         Envelope expandedMBR = new Envelope(mbr);
@@ -107,6 +128,13 @@ public abstract class RectangleTree {
         return expandedMBR.getArea() - mbr.getArea();
     }
 
+    /**
+     * Ajoute un nouveau polygon dans le nœud donné
+     * @param node Le nœud dans lequel ajouter le nouveau polygon
+     * @param label Le label du nouveau polygon
+     * @param polygon Le nouveau polygon à ajouter
+     * @return Le nouveau nœud créé si le nœud donné est plein, null sinon
+     */
     protected Node addLeaf(Node node, String label, SimpleFeature polygon) {
         node.addSubNode(new Leaf(label, polygon));
 
@@ -121,6 +149,11 @@ public abstract class RectangleTree {
         }
     }
 
+    /**
+     * Sépare le nœud donné en deux nouveaux nœuds
+     * @param node Le nœud à séparer
+     * @return Le nouveau nœud créé
+     */
     protected Node split(Node node) {
 
         // On choisit les deux sous-nœuds les plus éloignés en fonction de l'heuristique
@@ -140,6 +173,12 @@ public abstract class RectangleTree {
         return newGroup2;
     }
 
+    /**
+     * Cree deux nouveaux groupes et y ajoute les deux sous-nœuds les plus éloignés
+     * @param node Le nœud à partir duquel effectuer la recherche
+     * @param seeds Les deux sous-nœuds les plus éloignés
+     * @return Les deux nouveaux groupes
+     */
     private Node[] createNewGroup(Node node, int[] seeds) {
         // On crée deux nouveaux groupes et on y ajoute les deux sous-nœuds les plus éloignés
         Node newGroup1 = new Node();
@@ -149,6 +188,12 @@ public abstract class RectangleTree {
         return new Node[]{newGroup1, newGroup2};
     }
 
+    /**
+     * Initialise le tableau des sous-nœuds déjà assignés
+     * @param node Le nœud à partir duquel effectuer la recherche
+     * @param seeds Les deux sous-nœuds les plus éloignés
+     * @return Le tableau des sous-nœuds déjà assignés
+     */
     private boolean[] initAssignedArray(Node node, int[] seeds) {
         boolean[] assigned = new boolean[node.getSubNodes().size()];
         assigned[seeds[0]] = true;
@@ -156,6 +201,13 @@ public abstract class RectangleTree {
         return assigned;
     }
 
+    /**
+     * Recherche le sous-nœud le plus éloigné des deux groupes
+     * @param node Le nœud à partir duquel effectuer la recherche
+     * @param newGroup1 Le premier groupe
+     * @param newGroup2 Le deuxième groupe
+     * @param assigned Le tableau des sous-nœuds déjà assignés
+     */
     private void assignNextNode(Node node, Node newGroup1, Node newGroup2, boolean[] assigned) {
         Envelope mbr1 = newGroup1.getMBR();
         Envelope mbr2 = newGroup2.getMBR();
@@ -176,13 +228,26 @@ public abstract class RectangleTree {
         assigned[next] = true;
     }
 
+    /**
+     * Calcule le gaspillage en combinant les deux enveloppes
+     * @param e1 L'enveloppe du premier groupe
+     * @param e2 L'enveloppe du deuxième groupe
+     * @return Le coût du gaspillage
+     */
     public double calculateWaste(Envelope e1, Envelope e2) {
-        // On calcule le gaspillage en combinant les deux enveloppes
         Envelope combinedEnvelope = new Envelope(e1);
         combinedEnvelope.expandToInclude(e2);
         return combinedEnvelope.getArea() - e1.getArea() - e2.getArea();
     }
 
+    /**
+     * Selectionne le sous-nœud le plus éloigné en fonction de l'heuristique
+     * @param subNodes La liste des sous-nœuds
+     * @param mbr1 L'enveloppe du premier groupe
+     * @param mbr2 L'enveloppe du deuxième groupe
+     * @param assigned Le tableau des sous-nœuds déjà assignés
+     * @return L'index du sous-nœud le plus éloigné
+     */
     public int pickNext(List<Node> subNodes, Envelope mbr1, Envelope mbr2, boolean[] assigned) {
         int nextNodeIndex = -1;
         double maxCost = Double.NEGATIVE_INFINITY;
@@ -203,10 +268,21 @@ public abstract class RectangleTree {
         return nextNodeIndex;
     }
 
+    /**
+     * Recherche un point dans l'arbre
+     * @param point Le point à rechercher
+     * @return Le sous-nœud contenant le point
+     */
     public Leaf search(Point point) {
         return searchPoint(this.root, point);
     }
 
+    /**
+     * Recherche un point dans un nœud
+     * @param node Le nœud à partir duquel effectuer la recherche
+     * @param point Le point à rechercher
+     * @return Le sous-nœud contenant le point
+     */
     private Leaf searchPoint(Node node, Point point) {
         if (node == null) {
             return null;
@@ -229,8 +305,20 @@ public abstract class RectangleTree {
         return null;
     }
 
+    /**
+     * Méthode qui permet de choisir les deux sous-nœuds qui vont être les premiers enfants du nœud courant.
+     * @param subnodes Liste des sous-nœuds du nœud courant
+     * @return Tableau contenant les index des deux sous-nœuds choisis
+     */
     protected abstract int[] pickSeeds(List<Node> subnodes);
 
+    /**
+     * Méthode qui permet de calculer le coût de l'ajout d'un sous-nœud à un nœud.
+     * @param mbr1 Sous-nœud 1
+     * @param mbr2 Sous-nœud 2
+     * @param currentMBR MBR du nœud courant
+     * @return Coût de l'ajout du sous-nœud
+     */
     protected abstract double calculateCost(Envelope mbr1, Envelope mbr2, Envelope currentMBR);
 
 }

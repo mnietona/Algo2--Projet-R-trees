@@ -4,7 +4,11 @@ import org.locationtech.jts.geom.Envelope;
 
 import java.util.List;
 
-
+/**
+ * Classe représentant un QuadraticRectangleTree.
+ * Cette classe hérite de la classe RectangleTree.
+ * Elle implémente les méthodes pickSeeds et calculateCost.
+ */
 public class QuadraticRectangleTree extends RectangleTree {
     public QuadraticRectangleTree(int N) {
         super(N);
@@ -38,6 +42,5 @@ public class QuadraticRectangleTree extends RectangleTree {
         // On retourne le carré de la somme des coûts
         return cost1 * cost1 + cost2 * cost2;
     }
-
 }
 
