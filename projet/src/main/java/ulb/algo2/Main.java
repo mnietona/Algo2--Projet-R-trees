@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 public class Main {
     public static void main(String[] args) throws Exception {
 
-        // input choice
         Scanner scanner = new Scanner(System.in);
         System.out.println("Quelle carte voulez-vous ?");
         System.out.println("0: Monde");
@@ -75,7 +74,7 @@ public class Main {
         store.dispose();
 
 
-        // Build R-Trees
+        // Construction des R-Trees
         System.out.println("Construction des R-Trees...");
         long startTime = System.nanoTime();
 
@@ -89,7 +88,7 @@ public class Main {
         endTime = System.nanoTime();
         System.out.println("R-Tree quadratique construit en  " + TimeUnit.NANOSECONDS.toMillis(endTime - startTime) + " ms.\n");
 
-        // Get global bounds
+
         ReferencedEnvelope global_bounds = featureSource.getBounds();
         GeometryBuilder gb = new GeometryBuilder();
 
@@ -97,6 +96,7 @@ public class Main {
         System.out.println("0: Évaluer les R-Trees sur des points aléatoires");
         System.out.println("1: Afficher le résultat d'un point aléatoire");
         choice = scanner.nextInt();
+
         if (choice == 0) {
             evaluateRtreeVariants(allFeatures,linearTree,quadraticTree,global_bounds, gb,map);
         }else if (choice == 1) {
@@ -112,14 +112,14 @@ public class Main {
 
         if (linearTreeResult != null) {
             System.out.println("Résultat du R-Tree linéaire : " + linearTreeResult.getLabel());
-            showMapForTree(featureSource, linearTreeResult, gb, allFeatures, randomPoint.getLeft(), Color.red, 2.0f, "Linear R-Tree");
+            showMapForTree(featureSource, linearTreeResult, gb, Color.red, 2.0f, "Linear R-Tree");
         }else {
             System.out.println("Résultat du R-Tree linéaire est null");
         }
 
         if (quadraticTreeResult != null) {
             System.out.println("Résultat du R-Tree quadratique : " + quadraticTreeResult.getLabel());
-            showMapForTree(featureSource, quadraticTreeResult, gb, allFeatures, randomPoint.getLeft(), Color.blue, 4.0f, "Quadratic R-Tree");
+            showMapForTree(featureSource, quadraticTreeResult, gb,Color.blue, 4.0f, "Quadratic R-Tree");
         }else {
             System.out.println("Résultat du R-Tree quadratique est null");
         }
@@ -231,8 +231,7 @@ public class Main {
 
 
     public static void showMapForTree(SimpleFeatureSource featureSource, Leaf treeResult,
-                                      GeometryBuilder gb, SimpleFeatureCollection allFeatures, Point p,
-                                      Color treeColor, float treeStrokeWidth, String treeTitle) {
+                                      GeometryBuilder gb, Color treeColor, float treeStrokeWidth, String treeTitle) {
         MapContent map = new MapContent();
         map.setTitle(treeTitle);
 
