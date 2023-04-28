@@ -24,6 +24,9 @@ La 4ème carte ```Turquie``` est déjà ajoutée.
 3. Pour les lancements ultérieurs :
     - Répétez l'étape 2 ou sélectionnez "Main" dans la liste des configurations située en haut à droite de la fenêtre, puis cliquez sur le bouton ```Run 'Main'``` (flèche verte).
 
+Si vous rencontrez des problèmes lors de l'exécution du programme, clique droit sur le dossier ```projet``` et sélectionnez ```Maven``` > ```Reload Project```. 
+Ensuite, répétez l'étape 2.
+
 ## Fonctionnement du programme
 Une fois le programme lancé, voici les étapes qui se déroulent :
 
