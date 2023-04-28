@@ -13,8 +13,8 @@ Pour exécuter le projet, vous devez installer les outils suivants :
 2. Téléchargez et installez la dernière version d'IntelliJ IDEA Community ou Ultimate depuis le site Web de JetBrains (https://www.jetbrains.com/idea/download/).
 
 ## Ajout des données 
-Pour utiliser les données cartographiques, ajoutez le dossier ```data``` contenant les trois cartes fournies dans l'énoncé du projet. Placez ce dossier à l'intérieur du dossier principal ```projet```.  
-Pour la quatrième carte, téléchargez le dossier ```turkey``` à partir de ce lien https://www.diva-gis.org/datadown et placez le dossier dans ```data```.
+Pour utiliser les données cartographiques, ajoutez dans dossier ```data``` qui se trouve dans le dossier ```projet``` les trois cartes fournies dans l'énoncé du projet.
+La 4ème carte ```Turquie``` est déjà ajoutée.
 
 ## Lancement du programme depuis IntelliJ
 1. Ouvrez le projet dans IntelliJ. Si une fenêtre contextuelle ```"Maven build scripts found"``` apparaît, cliquez sur le bouton  
