@@ -158,14 +158,15 @@ public abstract class RectangleTree {
 
         // On choisit les deux sous-nœuds les plus éloignés en fonction de l'heuristique
         int[] seeds = pickSeeds(node.getSubNodes());
+
         Node[] newGroup = createNewGroup(node, seeds);
         Node newGroup1 = newGroup[0];
         Node newGroup2 = newGroup[1];
 
-        boolean[] assigned = initAssignedArray(node, seeds);
+        boolean[] assigned = initArray(node, seeds);
         int remaining = node.getSubNodes().size() - 2;
 
-        while (remaining > 0) {
+        while (remaining > 0) { // Tant qu'il reste des sous-nœuds à assigner
             assignNextNode(node, newGroup1, newGroup2, assigned);
             remaining--;
         }
@@ -180,7 +181,6 @@ public abstract class RectangleTree {
      * @return Les deux nouveaux groupes
      */
     private Node[] createNewGroup(Node node, int[] seeds) {
-        // On crée deux nouveaux groupes et on y ajoute les deux sous-nœuds les plus éloignés
         Node newGroup1 = new Node();
         Node newGroup2 = new Node();
         newGroup1.addSubNode(node.getSubNodes().get(seeds[0]));
@@ -194,7 +194,7 @@ public abstract class RectangleTree {
      * @param seeds Les deux sous-nœuds les plus éloignés
      * @return Le tableau des sous-nœuds déjà assignés
      */
-    private boolean[] initAssignedArray(Node node, int[] seeds) {
+    private boolean[] initArray(Node node, int[] seeds) {
         boolean[] assigned = new boolean[node.getSubNodes().size()];
         assigned[seeds[0]] = true;
         assigned[seeds[1]] = true;
